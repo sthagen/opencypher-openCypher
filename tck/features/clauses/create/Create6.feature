@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2019 "Neo Technology,"
+# Copyright (c) 2015-2020 "Neo Technology,"
 # Network Engine for Objects in Lund AB [http://neotechnology.com]
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,6 +48,7 @@ Feature: Create6 - Negative tests
     Then a SyntaxError should be raised at compile time: RequiresDirectedRelationship
 
   Scenario: [3] Fail when creating a relationship with more than one type
+    Given any graph
     When executing query:
       """
       CREATE ()-[:A|:B]->()
@@ -55,6 +56,7 @@ Feature: Create6 - Negative tests
     Then a SyntaxError should be raised at compile time: NoSingleRelationshipType
 
   Scenario: [4] Fail when creating a variable-length relationship
+    Given any graph
     When executing query:
       """
       CREATE ()-[:FOO*2]->()
@@ -62,6 +64,7 @@ Feature: Create6 - Negative tests
     Then a SyntaxError should be raised at compile time: CreatingVarLength
 
   Scenario: [5] Fail when creating a node that is already bound
+    Given any graph
     When executing query:
       """
       MATCH (a)
@@ -70,6 +73,7 @@ Feature: Create6 - Negative tests
     Then a SyntaxError should be raised at compile time: VariableAlreadyBound
 
   Scenario: [6] Fail when creating a relationship that is already bound
+    Given any graph
     When executing query:
       """
       MATCH ()-[r]->()
