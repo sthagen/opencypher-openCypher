@@ -10,10 +10,10 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>tck-reporting</artifactId>
-    <name>openCypher TCK Reporting</name>
+    <artifactId>tck-inspection</artifactId>
+    <name>openCypher TCK Inspection</name>
     <url>http://opencypher.org</url>
-    <description>Generate cucumber.json and use Cucumber plugins with openCypher TCK API</description>
+    <description>Tools for inspecting openCypher TCK scenarios</description>
 
     <properties>
         <project.rootdir>${project.basedir}/../..</project.rootdir>
@@ -25,6 +25,18 @@
             <url>http://www.apache.org/licenses/LICENSE-2.0</url>
         </license>
     </licenses>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 
     <dependencies>
         <dependency>
@@ -43,7 +55,29 @@
             <artifactId>cucumber-core</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.lihaoyi</groupId>
+            <artifactId>cask_2.12</artifactId>
+            <version>0.2.9</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.lihaoyi</groupId>
+            <artifactId>scalatags_2.12</artifactId>
+            <version>0.7.0</version>
+        </dependency>
+
         <!-- Test deps -->
+
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_${scala.binary.version}</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.scalacheck</groupId>
+            <artifactId>scalacheck_${scala.binary.version}</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.junit.platform</groupId>

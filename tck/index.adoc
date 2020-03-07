@@ -30,7 +30,26 @@ Each feature follows a naming convention of `<clause-name><group-id>.feature`.
 
 === MATCH
 
-* `Match1`: ...
+* `Match1`: Match nodes
+** This group is about matching nodes.
+* `Match2`: Match relationships
+** This group is about matching relationships.
+* `Match3`: Match fixed length patterns
+** This group is about matching patterns.
+* `Match4`: Match variable length patterns
+** This group is about matching variable length patterns.
+* `Match5`: Match variable length patterns over given graphs
+** This group is about matching patterns over given graphs.
+* `Match6`: Match named paths
+** This group is about matching named paths.
+* `Match7`: Optional match
+** This group is about optional matching with all of the above.
+* `Match8`: Interoperation with other clauses
+** This group is about Interoperation of `MATCH` clause with other clauses.
+* `Match9`: Deprecated features
+** This group is about deprecated `MATCH` clause features.
+* `Match10`: Negative tests
+** This group is about failure for the `MATCH` clause.
 
 === UNWIND
 
