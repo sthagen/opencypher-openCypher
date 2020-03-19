@@ -28,106 +28,87 @@
 
 #encoding: utf-8
 
-Feature: Match2 - Match relationships scenarios
+Feature: Delete1 - Deleting nodes
 
-  Scenario: [1] Match non-existent relationships returns empty
-    Given an empty graph
-    When executing query:
-      """
-      MATCH ()-[r]->()
-      RETURN r
-      """
-    Then the result should be, in any order:
-      | r |
-    And no side effects
-
-  Scenario: [2] Matching a relationship pattern using a label predicate on both sides
+  Scenario: [1] Delete nodes
     Given an empty graph
     And having executed:
       """
-      CREATE (:A)-[:T1]->(:B),
-             (:B)-[:T2]->(:A),
-             (:B)-[:T3]->(:B),
-             (:A)-[:T4]->(:A)
+      CREATE ()
       """
     When executing query:
       """
-      MATCH (:A)-[r]->(:B)
-      RETURN r
+      MATCH (n)
+      DELETE n
       """
-    Then the result should be, in any order:
-      | r     |
-      | [:T1] |
-    And no side effects
+    Then the result should be empty
+    And the side effects should be:
+      | -nodes | 1 |
 
-  Scenario: [3] Matching a self-loop with an undirected relationship pattern
+  Scenario: [2] Detach delete node
     Given an empty graph
     And having executed:
       """
-      CREATE (a)
-      CREATE (a)-[:T]->(a)
+      CREATE ()
       """
     When executing query:
       """
-      MATCH ()-[r]-()
-      RETURN type(r) AS r
+      MATCH (n)
+      DETACH DELETE n
       """
-    Then the result should be, in any order:
-      | r   |
-      | 'T' |
-    And no side effects
+    Then the result should be empty
+    And the side effects should be:
+      | -nodes | 1 |
 
-  Scenario: [4] Matching a self-loop with a directed relationship pattern
+  Scenario: [3] Detach deleting connected nodes and relationships
     Given an empty graph
     And having executed:
       """
-      CREATE (a)
-      CREATE (a)-[:T]->(a)
+      CREATE (x:X)
+      CREATE (x)-[:R]->()
+      CREATE (x)-[:R]->()
+      CREATE (x)-[:R]->()
       """
     When executing query:
       """
-      MATCH ()-[r]->()
-      RETURN type(r) AS r
+      MATCH (n:X)
+      DETACH DELETE n
       """
-    Then the result should be, in any order:
-      | r   |
-      | 'T' |
+    Then the result should be empty
+    And the side effects should be:
+      | -nodes         | 1 |
+      | -relationships | 3 |
+      | -labels        | 1 |
+
+  Scenario: [4] Delete on null node
+    Given an empty graph
+    When executing query:
+      """
+      OPTIONAL MATCH (n)
+      DELETE n
+      """
+    Then the result should be empty
     And no side effects
 
-  Scenario: [5] Match relationship with inline property value
+  Scenario: [5] Ignore null when deleting node
     Given an empty graph
-    And having executed:
-      """
-      CREATE (:A)<-[:KNOWS {name: 'monkey'}]-()-[:KNOWS {name: 'woot'}]->(:B)
-      """
     When executing query:
       """
-      MATCH (node)-[r:KNOWS {name: 'monkey'}]->(a)
+      OPTIONAL MATCH (a:DoesNotExist)
+      DELETE a
       RETURN a
       """
     Then the result should be, in any order:
       | a    |
-      | (:A) |
+      | null |
     And no side effects
 
-  Scenario: [6] Match relationships with multiple types
+  Scenario: [6] Detach delete on null node
     Given an empty graph
-    And having executed:
-      """
-      CREATE (a {name: 'A'}),
-        (b {name: 'B'}),
-        (c {name: 'C'}),
-        (a)-[:KNOWS]->(b),
-        (a)-[:HATES]->(c),
-        (a)-[:WONDERS]->(c)
-      """
     When executing query:
       """
-      MATCH (n)-[r:KNOWS|HATES]->(x)
-      RETURN r
+      OPTIONAL MATCH (n)
+      DETACH DELETE n
       """
-    Then the result should be, in any order:
-      | r        |
-      | [:KNOWS] |
-      | [:HATES] |
+    Then the result should be empty
     And no side effects
