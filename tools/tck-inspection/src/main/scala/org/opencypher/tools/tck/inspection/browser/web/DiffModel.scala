@@ -25,31 +25,61 @@
  * described as "implementation extensions to Cypher" or as "proposed changes to
  * Cypher that are not yet approved by the openCypher community".
  */
-package org.opencypher.tools.tck.inspection
+package org.opencypher.tools.tck.inspection.browser.web
 
 import org.opencypher.tools.tck.api.CypherTCK
 import org.opencypher.tools.tck.api.Scenario
+import org.opencypher.tools.tck.inspection.collect.Group
+import org.opencypher.tools.tck.inspection.collect.GroupCollection
+import org.opencypher.tools.tck.inspection.collect.Total
+import org.opencypher.tools.tck.inspection.diff.GroupCollectionDiff
+import org.opencypher.tools.tck.inspection.diff.GroupDiff
 
 import scala.util.matching.Regex
 
-case class BrowserModel(path: String) {
+sealed trait TckCollection
+
+object BeforeCollection extends TckCollection {
+  override def toString: String = "Before"
+}
+object AfterCollection extends TckCollection {
+  override def toString: String = "After"
+}
+object BothCollections extends TckCollection {
+  override def toString: String = "Both"
+}
+
+case class DiffModel(beforePath: String, afterPath: String) {
 
   private val regexLeadingNumber: Regex = """[\[][0-9]+[\]][ ]""".r
 
-  private val scenariosRaw = CypherTCK.allTckScenariosFromFilesystem(path)
-  private val scenarios = scenariosRaw.map(
+  private val scenariosBeforeRaw = CypherTCK.allTckScenariosFromFilesystem(beforePath)
+  private val scenariosBefore = scenariosBeforeRaw.map(
+    s => Scenario(s.categories, s.featureName, regexLeadingNumber.replaceFirstIn(s.name, ""), s.exampleIndex, s.tags, s.steps, s.source, s.sourceFile)
+  )
+  private val scenariosAfterRaw = CypherTCK.allTckScenariosFromFilesystem(afterPath)
+  private val scenariosAfter = scenariosAfterRaw.map(
     s => Scenario(s.categories, s.featureName, regexLeadingNumber.replaceFirstIn(s.name, ""), s.exampleIndex, s.tags, s.steps, s.source, s.sourceFile)
   )
 
-  val counts: Map[Group, Seq[Scenario]] = CountScenarios.collect(scenarios)
+  val (before, after) = (GroupCollection(scenariosBefore), GroupCollection(scenariosAfter))
+
+  val diffs: Map[Group, GroupDiff] = GroupCollectionDiff(before, after)
+
+  val scenario2Collection: Map[Scenario, TckCollection] =
+    diffs(Total).unchangedScenarios.map(_ -> BothCollections).toMap ++
+      diffs(Total).movedScenarios.flatMap { case d => Map(d.before -> BeforeCollection, d.after -> AfterCollection) } ++
+      diffs(Total).changedScenarios.flatMap { case d => Map(d.before -> BeforeCollection, d.after -> AfterCollection) } ++
+      diffs(Total).addedScenarios.map(_ -> AfterCollection).toMap ++
+      diffs(Total).removedScenarios.map(_ -> BeforeCollection).toMap
 
   val (groupId2Group, group2GroupId) = {
-    val groupList = counts.keySet.toIndexedSeq
+    val groupList = diffs.keySet.toIndexedSeq
     (groupList, groupList.zipWithIndex.map(p => (p._1, p._2)).toMap)
   }
 
   val (scenarioId2Scenario, scenario2ScenarioId) = {
-    val scenarioList = counts(Total).toList.toIndexedSeq
+    val scenarioList = (scenariosBefore union scenariosAfter).toList.toIndexedSeq
     (scenarioList, scenarioList.zipWithIndex.map(p => (p._1, p._2)).toMap)
   }
 }

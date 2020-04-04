@@ -25,13 +25,16 @@
  * described as "implementation extensions to Cypher" or as "proposed changes to
  * Cypher that are not yet approved by the openCypher community".
  */
-package org.opencypher.tools.tck.inspection
+package org.opencypher.tools.tck.inspection.browser.web
 
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 import org.opencypher.tools.tck.api.Scenario
+import org.opencypher.tools.tck.inspection.collect.Group
+import org.opencypher.tools.tck.inspection.util.CallingSystemProcesses
+import org.opencypher.tools.tck.inspection.util.ProcessReturn
 import scalatags.Text.all._
 
 case class DiffRoutes()(implicit val log: cask.Logger) extends cask.Routes with PageBasic {
@@ -117,7 +120,7 @@ case class DiffRoutes()(implicit val log: cask.Logger) extends cask.Routes with 
     pageFrag = diffPages =>
       securedGroupPage(diffPages, groupId, group =>
         listScenariosPage(
-          scenarios = group => diffPages.diffModel.diffs.get(group).map(_.unchanged.toSeq),
+          scenarios = group => diffPages.diffModel.diffs.get(group).map(_.unchangedScenarios.toSeq),
           group = group,
           kind = Some("unchanged"),
           showSingleScenarioURL = scenario => showSingleScenarioURL(diffPages, scenario),
@@ -137,7 +140,7 @@ case class DiffRoutes()(implicit val log: cask.Logger) extends cask.Routes with 
     pageFrag = diffPages =>
       securedGroupPage(diffPages, groupId, group =>
         listScenariosPage(
-          scenarios = group => diffPages.diffModel.diffs.get(group).map(_.added.toSeq),
+          scenarios = group => diffPages.diffModel.diffs.get(group).map(_.addedScenarios.toSeq),
           group = group,
           kind = Some("added"),
           showSingleScenarioURL = scenario => showSingleScenarioURL(diffPages, scenario),
@@ -157,7 +160,7 @@ case class DiffRoutes()(implicit val log: cask.Logger) extends cask.Routes with 
     pageFrag = diffPages =>
       securedGroupPage(diffPages, groupId, group =>
         listScenariosPage(
-          scenarios = group => diffPages.diffModel.diffs.get(group).map(_.removed.toSeq),
+          scenarios = group => diffPages.diffModel.diffs.get(group).map(_.removedScenarios.toSeq),
           group = group,
           kind = Some("removed"),
           showSingleScenarioURL = scenario => showSingleScenarioURL(diffPages, scenario),
