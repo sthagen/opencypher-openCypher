@@ -28,55 +28,44 @@
 
 #encoding: utf-8
 
-Feature: ColumnNameAcceptance
+Feature: List6 - List Size
 
-  Background:
+  Scenario: [1] Return list size
+    Given any graph
+    When executing query:
+      """
+      RETURN size([1, 2, 3]) AS n
+      """
+    Then the result should be, in any order:
+      | n |
+      | 3 |
+    And no side effects
+
+  Scenario: [2] Setting and returning the size of a list property
     Given an empty graph
     And having executed:
       """
-      CREATE ()
+      CREATE (:TheLabel)
       """
-
-  Scenario: Keeping used expression 1
     When executing query:
       """
-      MATCH (n)
-      RETURN cOuNt( * )
+      MATCH (n:TheLabel)
+      SET n.numbers = [1, 2, 3]
+      RETURN size(n.numbers)
       """
     Then the result should be, in any order:
-      | cOuNt( * ) |
-      | 1          |
-    And no side effects
+      | size(n.numbers) |
+      | 3               |
+    And the side effects should be:
+      | +properties | 1 |
 
-  Scenario: Keeping used expression 2
+  Scenario: [3] Concatenating and returning the size of literal lists
+    Given any graph
     When executing query:
       """
-      MATCH p = (n)-->(b)
-      RETURN nOdEs( p )
+      RETURN size([[], []] + [[]]) AS l
       """
     Then the result should be, in any order:
-      | nOdEs( p ) |
-    And no side effects
-
-  @skipStyleCheck
-  Scenario: Keeping used expression 3
-    When executing query:
-      """
-      MATCH p = (n)-->(b)
-      RETURN coUnt( dIstInct p )
-      """
-    Then the result should be, in any order:
-      | coUnt( dIstInct p ) |
-      | 0                   |
-    And no side effects
-
-  Scenario: Keeping used expression 4
-    When executing query:
-      """
-      MATCH p = (n)-->(b)
-      RETURN aVg(    n.aGe     )
-      """
-    Then the result should be, in any order:
-      | aVg(    n.aGe     ) |
-      | null                |
+      | l |
+      | 3 |
     And no side effects

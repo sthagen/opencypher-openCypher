@@ -28,55 +28,37 @@
 
 #encoding: utf-8
 
-Feature: ColumnNameAcceptance
+Feature: List12 - List Operations Failure
 
-  Background:
-    Given an empty graph
-    And having executed:
-      """
-      CREATE ()
-      """
-
-  Scenario: Keeping used expression 1
+  Scenario: [1] Fail at runtime when attempting to index with a String into a List
+    Given any graph
+    And parameters are:
+      | expr | ['Apa'] |
+      | idx  | 'name'  |
     When executing query:
       """
-      MATCH (n)
-      RETURN cOuNt( * )
+      WITH $expr AS expr, $idx AS idx
+      RETURN expr[idx]
       """
-    Then the result should be, in any order:
-      | cOuNt( * ) |
-      | 1          |
-    And no side effects
+    Then a TypeError should be raised at runtime: ListElementAccessByNonInteger
 
-  Scenario: Keeping used expression 2
+  Scenario: [2] Fail at runtime when trying to index into a list with a list
+    Given any graph
+    And parameters are:
+      | expr | ['Apa'] |
+      | idx  | ['Apa'] |
     When executing query:
       """
-      MATCH p = (n)-->(b)
-      RETURN nOdEs( p )
+      WITH $expr AS expr, $idx AS idx
+      RETURN expr[idx]
       """
-    Then the result should be, in any order:
-      | nOdEs( p ) |
-    And no side effects
+    Then a TypeError should be raised at runtime: ListElementAccessByNonInteger
 
-  @skipStyleCheck
-  Scenario: Keeping used expression 3
+  Scenario: [3] Fail at compile time when attempting to index with a non-integer into a list
+    Given any graph
     When executing query:
       """
-      MATCH p = (n)-->(b)
-      RETURN coUnt( dIstInct p )
+      WITH [1, 2, 3, 4, 5] AS list, 3.14 AS idx
+      RETURN list[idx]
       """
-    Then the result should be, in any order:
-      | coUnt( dIstInct p ) |
-      | 0                   |
-    And no side effects
-
-  Scenario: Keeping used expression 4
-    When executing query:
-      """
-      MATCH p = (n)-->(b)
-      RETURN aVg(    n.aGe     )
-      """
-    Then the result should be, in any order:
-      | aVg(    n.aGe     ) |
-      | null                |
-    And no side effects
+    Then a SyntaxError should be raised at compile time: InvalidArgumentType

@@ -28,55 +28,70 @@
 
 #encoding: utf-8
 
-Feature: ColumnNameAcceptance
+Feature: List1 - Element Access
 
-  Background:
-    Given an empty graph
-    And having executed:
-      """
-      CREATE ()
-      """
-
-  Scenario: Keeping used expression 1
+  Scenario: [1] Indexing into literal list
+    Given any graph
     When executing query:
       """
-      MATCH (n)
-      RETURN cOuNt( * )
+      RETURN [1, 2, 3][0] AS value
       """
     Then the result should be, in any order:
-      | cOuNt( * ) |
-      | 1          |
+      | value |
+      | 1     |
     And no side effects
 
-  Scenario: Keeping used expression 2
+  Scenario: [2] Indexing into nested literal lists
+    Given any graph
     When executing query:
       """
-      MATCH p = (n)-->(b)
-      RETURN nOdEs( p )
+      RETURN [[1]][0][0]
       """
     Then the result should be, in any order:
-      | nOdEs( p ) |
+      | [[1]][0][0] |
+      | 1           |
     And no side effects
 
-  @skipStyleCheck
-  Scenario: Keeping used expression 3
+  Scenario: [3] Use list lookup based on parameters when there is no type information
+    Given any graph
+    And parameters are:
+      | expr | ['Apa'] |
+      | idx  | 0       |
     When executing query:
       """
-      MATCH p = (n)-->(b)
-      RETURN coUnt( dIstInct p )
+      WITH $expr AS expr, $idx AS idx
+      RETURN expr[idx] AS value
       """
     Then the result should be, in any order:
-      | coUnt( dIstInct p ) |
-      | 0                   |
+      | value |
+      | 'Apa' |
     And no side effects
 
-  Scenario: Keeping used expression 4
+  Scenario: [4] Use list lookup based on parameters when there is lhs type information
+    Given any graph
+    And parameters are:
+      | idx | 0 |
     When executing query:
       """
-      MATCH p = (n)-->(b)
-      RETURN aVg(    n.aGe     )
+      WITH ['Apa'] AS expr
+      RETURN expr[$idx] AS value
       """
     Then the result should be, in any order:
-      | aVg(    n.aGe     ) |
-      | null                |
+      | value |
+      | 'Apa' |
+    And no side effects
+
+  Scenario: [5] Use list lookup based on parameters when there is rhs type information
+    Given any graph
+    And parameters are:
+      | expr | ['Apa'] |
+      | idx  | 0       |
+    When executing query:
+      """
+      WITH $expr AS expr, $idx AS idx
+      RETURN expr[toInteger(idx)] AS value
+      """
+    Then the result should be, in any order:
+      | value |
+      | 'Apa' |
     And no side effects

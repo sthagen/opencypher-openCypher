@@ -28,117 +28,150 @@
 
 #encoding: utf-8
 
-Feature: Literals
+Feature: List2 - List Slicing
 
-  Background:
+  Scenario: [1] List slice
     Given any graph
-
-  Scenario: Return an integer
     When executing query:
       """
-      RETURN 1 AS literal
+      WITH [1, 2, 3, 4, 5] AS list
+      RETURN list[1..3] AS r
       """
     Then the result should be, in any order:
-      | literal |
-      | 1       |
+      | r      |
+      | [2, 3] |
     And no side effects
 
-  Scenario: Return a float
+  Scenario: [2] List slice with implicit end
+    Given any graph
     When executing query:
       """
-      RETURN 1.0 AS literal
+      WITH [1, 2, 3] AS list
+      RETURN list[1..] AS r
       """
     Then the result should be, in any order:
-      | literal |
-      | 1.0     |
+      | r      |
+      | [2, 3] |
     And no side effects
 
-  Scenario: Return a float in exponent form
+  Scenario: [3] List slice with implicit start
+    Given any graph
     When executing query:
       """
-      RETURN -1e-9 AS literal
+      WITH [1, 2, 3] AS list
+      RETURN list[..2] AS r
       """
     Then the result should be, in any order:
-      | literal     |
-      | -.000000001 |
+      | r      |
+      | [1, 2] |
     And no side effects
 
-  Scenario: Return a boolean
+  Scenario: [4] List slice with singleton range
+    Given any graph
     When executing query:
       """
-      RETURN true AS literal
+      WITH [1, 2, 3] AS list
+      RETURN list[0..1] AS r
       """
     Then the result should be, in any order:
-      | literal |
-      | true    |
+      | r   |
+      | [1] |
     And no side effects
 
-  Scenario: Return a single-quoted string
+  Scenario: [5] List slice with empty range
+    Given any graph
     When executing query:
       """
-      RETURN '' AS literal
+      WITH [1, 2, 3] AS list
+      RETURN list[0..0] AS r
       """
     Then the result should be, in any order:
-      | literal |
-      | ''      |
+      | r  |
+      | [] |
     And no side effects
 
-  Scenario: Return a double-quoted string
+  Scenario: [6] List slice with negative range
+    Given any graph
     When executing query:
       """
-      RETURN "" AS literal
+      WITH [1, 2, 3] AS list
+      RETURN list[-3..-1] AS r
       """
     Then the result should be, in any order:
-      | literal |
-      | ''      |
+      | r      |
+      | [1, 2] |
     And no side effects
 
-  Scenario: Return null
+  Scenario: [7] List slice with invalid range
+    Given any graph
     When executing query:
       """
-      RETURN null AS literal
+      WITH [1, 2, 3] AS list
+      RETURN list[3..1] AS r
       """
     Then the result should be, in any order:
-      | literal |
-      | null    |
+      | r  |
+      | [] |
     And no side effects
 
-  Scenario: Return an empty list
+  Scenario: [8] List slice with exceeding range
+    Given any graph
     When executing query:
       """
-      RETURN [] AS literal
+      WITH [1, 2, 3] AS list
+      RETURN list[-5..5] AS r
       """
     Then the result should be, in any order:
-      | literal |
-      | []      |
+      | r         |
+      | [1, 2, 3] |
     And no side effects
 
-  Scenario: Return a nonempty list
+  Scenario Outline: [9] List slice with null range
+    Given any graph
     When executing query:
       """
-      RETURN [0, 1, 2] AS literal
+      WITH [1, 2, 3] AS list
+      RETURN list[<lower>..<upper>] AS r
       """
     Then the result should be, in any order:
-      | literal   |
-      | [0, 1, 2] |
+      | r    |
+      | null |
     And no side effects
 
-  Scenario: Return an empty map
+    Examples:
+      | lower | upper |
+      | null  | null  |
+      | 1     | null  |
+      | null  | 3     |
+      |       | null  |
+      | null  |       |
+
+  Scenario: [10] List slice with parameterised range
+    Given any graph
+    And parameters are:
+      | from | 1 |
+      | to   | 3 |
     When executing query:
       """
-      RETURN {} AS literal
+      WITH [1, 2, 3] AS list
+      RETURN list[$from..$to] AS r
       """
     Then the result should be, in any order:
-      | literal |
-      | {}      |
+      | r      |
+      | [2, 3] |
     And no side effects
 
-  Scenario: Return a nonempty map
+  Scenario: [11] List slice with parameterised invalid range
+    Given any graph
+    And parameters are:
+      | from | 3 |
+      | to   | 1 |
     When executing query:
       """
-      RETURN {k1: 0, k2: 'string'} AS literal
+      WITH [1, 2, 3] AS list
+      RETURN list[$from..$to] AS r
       """
     Then the result should be, in any order:
-      | literal               |
-      | {k1: 0, k2: 'string'} |
+      | r  |
+      | [] |
     And no side effects

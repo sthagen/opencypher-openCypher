@@ -28,55 +28,26 @@
 
 #encoding: utf-8
 
-Feature: ColumnNameAcceptance
+Feature: List4 - List Concatenation
 
-  Background:
-    Given an empty graph
-    And having executed:
-      """
-      CREATE ()
-      """
-
-  Scenario: Keeping used expression 1
+  Scenario: [1] Concatenating lists of same type
+    Given any graph
     When executing query:
       """
-      MATCH (n)
-      RETURN cOuNt( * )
+      RETURN [1, 10, 100] + [4, 5] AS foo
       """
     Then the result should be, in any order:
-      | cOuNt( * ) |
-      | 1          |
+      | foo                |
+      | [1, 10, 100, 4, 5] |
     And no side effects
 
-  Scenario: Keeping used expression 2
+  Scenario: [2] Concatenating a list with a scalar of same type
+    Given any graph
     When executing query:
       """
-      MATCH p = (n)-->(b)
-      RETURN nOdEs( p )
+      RETURN [false, true] + false AS foo
       """
     Then the result should be, in any order:
-      | nOdEs( p ) |
-    And no side effects
-
-  @skipStyleCheck
-  Scenario: Keeping used expression 3
-    When executing query:
-      """
-      MATCH p = (n)-->(b)
-      RETURN coUnt( dIstInct p )
-      """
-    Then the result should be, in any order:
-      | coUnt( dIstInct p ) |
-      | 0                   |
-    And no side effects
-
-  Scenario: Keeping used expression 4
-    When executing query:
-      """
-      MATCH p = (n)-->(b)
-      RETURN aVg(    n.aGe     )
-      """
-    Then the result should be, in any order:
-      | aVg(    n.aGe     ) |
-      | null                |
+      | foo                  |
+      | [false, true, false] |
     And no side effects

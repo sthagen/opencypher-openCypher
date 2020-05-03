@@ -28,55 +28,22 @@
 
 #encoding: utf-8
 
-Feature: ColumnNameAcceptance
+Feature: List9 - List Tail
 
-  Background:
+  Scenario: [1] Returning nested expressions based on list property
     Given an empty graph
     And having executed:
       """
-      CREATE ()
+      CREATE (:TheLabel)
       """
-
-  Scenario: Keeping used expression 1
     When executing query:
       """
-      MATCH (n)
-      RETURN cOuNt( * )
+      MATCH (n:TheLabel)
+      SET n.array = [1, 2, 3, 4, 5]
+      RETURN tail(tail(n.array))
       """
     Then the result should be, in any order:
-      | cOuNt( * ) |
-      | 1          |
-    And no side effects
-
-  Scenario: Keeping used expression 2
-    When executing query:
-      """
-      MATCH p = (n)-->(b)
-      RETURN nOdEs( p )
-      """
-    Then the result should be, in any order:
-      | nOdEs( p ) |
-    And no side effects
-
-  @skipStyleCheck
-  Scenario: Keeping used expression 3
-    When executing query:
-      """
-      MATCH p = (n)-->(b)
-      RETURN coUnt( dIstInct p )
-      """
-    Then the result should be, in any order:
-      | coUnt( dIstInct p ) |
-      | 0                   |
-    And no side effects
-
-  Scenario: Keeping used expression 4
-    When executing query:
-      """
-      MATCH p = (n)-->(b)
-      RETURN aVg(    n.aGe     )
-      """
-    Then the result should be, in any order:
-      | aVg(    n.aGe     ) |
-      | null                |
-    And no side effects
+      | tail(tail(n.array)) |
+      | [3, 4, 5]           |
+    And the side effects should be:
+      | +properties | 1 |

@@ -28,55 +28,73 @@
 
 #encoding: utf-8
 
-Feature: ColumnNameAcceptance
+Feature: Literals1 - Boolean and Null
 
-  Background:
-    Given an empty graph
-    And having executed:
-      """
-      CREATE ()
-      """
-
-  Scenario: Keeping used expression 1
+  Scenario: [1] Return a boolean true lower case
+    Given any graph
     When executing query:
       """
-      MATCH (n)
-      RETURN cOuNt( * )
+      RETURN true AS literal
       """
     Then the result should be, in any order:
-      | cOuNt( * ) |
-      | 1          |
-    And no side effects
-
-  Scenario: Keeping used expression 2
-    When executing query:
-      """
-      MATCH p = (n)-->(b)
-      RETURN nOdEs( p )
-      """
-    Then the result should be, in any order:
-      | nOdEs( p ) |
+      | literal |
+      | true    |
     And no side effects
 
   @skipStyleCheck
-  Scenario: Keeping used expression 3
+  Scenario: [2] Return a boolean true upper case
+    Given any graph
     When executing query:
       """
-      MATCH p = (n)-->(b)
-      RETURN coUnt( dIstInct p )
+      RETURN TRUE AS literal
       """
     Then the result should be, in any order:
-      | coUnt( dIstInct p ) |
-      | 0                   |
+      | literal |
+      | true    |
     And no side effects
 
-  Scenario: Keeping used expression 4
+  Scenario: [3] Return a boolean false lower case
+    Given any graph
     When executing query:
       """
-      MATCH p = (n)-->(b)
-      RETURN aVg(    n.aGe     )
+      RETURN false AS literal
       """
     Then the result should be, in any order:
-      | aVg(    n.aGe     ) |
-      | null                |
+      | literal |
+      | false   |
+    And no side effects
+
+  @skipStyleCheck
+  Scenario: [4] Return a boolean false upper case
+    Given any graph
+    When executing query:
+      """
+      RETURN FALSE AS literal
+      """
+    Then the result should be, in any order:
+      | literal |
+      | false    |
+    And no side effects
+
+  Scenario: [5] Return null lower case
+    Given any graph
+    When executing query:
+      """
+      RETURN null AS literal
+      """
+    Then the result should be, in any order:
+      | literal |
+      | null    |
+    And no side effects
+
+  @skipStyleCheck
+  Scenario: [6] Return null upper case
+    Given any graph
+    When executing query:
+      """
+      RETURN NULL AS literal
+      """
+    Then the result should be, in any order:
+      | literal |
+      | null    |
     And no side effects

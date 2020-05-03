@@ -28,55 +28,61 @@
 
 #encoding: utf-8
 
-Feature: ColumnNameAcceptance
+Feature: List11 - List Comprehension
 
-  Background:
+  Scenario: [1] Collect and extract using a list comprehension
     Given an empty graph
     And having executed:
       """
-      CREATE ()
+      CREATE (:Label1 {name: 'original'})
       """
+    When executing query:
+      """
+      MATCH (a:Label1)
+      WITH collect(a) AS nodes
+      WITH nodes, [x IN nodes | x.name] AS oldNames
+      UNWIND nodes AS n
+      SET n.name = 'newName'
+      RETURN n.name, oldNames
+      """
+    Then the result should be, in any order:
+      | n.name    | oldNames     |
+      | 'newName' | ['original'] |
+    And the side effects should be:
+      | +properties | 1 |
+      | -properties | 1 |
 
-  Scenario: Keeping used expression 1
+  Scenario: [2] Collect and filter using a list comprehension
+    Given an empty graph
+    And having executed:
+      """
+      CREATE (:Label1 {name: 'original'})
+      """
+    When executing query:
+      """
+      MATCH (a:Label1)
+      WITH collect(a) AS nodes
+      WITH nodes, [x IN nodes WHERE x.name = 'original'] AS noopFiltered
+      UNWIND nodes AS n
+      SET n.name = 'newName'
+      RETURN n.name, size(noopFiltered)
+      """
+    Then the result should be, in any order:
+      | n.name    | size(noopFiltered) |
+      | 'newName' | 1                  |
+    And the side effects should be:
+      | +properties | 1 |
+      | -properties | 1 |
+
+  Scenario: [3] Size of list comprehension
+    Given an empty graph
     When executing query:
       """
       MATCH (n)
-      RETURN cOuNt( * )
+      OPTIONAL MATCH (n)-[r]->(m)
+      RETURN size([x IN collect(r) WHERE x <> null]) AS cn
       """
     Then the result should be, in any order:
-      | cOuNt( * ) |
-      | 1          |
-    And no side effects
-
-  Scenario: Keeping used expression 2
-    When executing query:
-      """
-      MATCH p = (n)-->(b)
-      RETURN nOdEs( p )
-      """
-    Then the result should be, in any order:
-      | nOdEs( p ) |
-    And no side effects
-
-  @skipStyleCheck
-  Scenario: Keeping used expression 3
-    When executing query:
-      """
-      MATCH p = (n)-->(b)
-      RETURN coUnt( dIstInct p )
-      """
-    Then the result should be, in any order:
-      | coUnt( dIstInct p ) |
-      | 0                   |
-    And no side effects
-
-  Scenario: Keeping used expression 4
-    When executing query:
-      """
-      MATCH p = (n)-->(b)
-      RETURN aVg(    n.aGe     )
-      """
-    Then the result should be, in any order:
-      | aVg(    n.aGe     ) |
-      | null                |
+      | cn |
+      | 0  |
     And no side effects

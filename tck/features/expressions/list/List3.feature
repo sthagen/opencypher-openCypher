@@ -28,55 +28,81 @@
 
 #encoding: utf-8
 
-Feature: ColumnNameAcceptance
+Feature: List3 - List Equality
 
-  Background:
-    Given an empty graph
-    And having executed:
-      """
-      CREATE ()
-      """
-
-  Scenario: Keeping used expression 1
+  Scenario: [1] Equality between list and literal should return false
+    Given any graph
     When executing query:
       """
-      MATCH (n)
-      RETURN cOuNt( * )
+      RETURN [1, 2] = 'foo' AS res
       """
     Then the result should be, in any order:
-      | cOuNt( * ) |
-      | 1          |
+      | res   |
+      | false |
     And no side effects
 
-  Scenario: Keeping used expression 2
+  Scenario: [2] Equality of lists of different length should return false despite nulls
+    Given any graph
     When executing query:
       """
-      MATCH p = (n)-->(b)
-      RETURN nOdEs( p )
+      RETURN [1] = [1, null] AS res
       """
     Then the result should be, in any order:
-      | nOdEs( p ) |
+      | res   |
+      | false |
     And no side effects
 
-  @skipStyleCheck
-  Scenario: Keeping used expression 3
+  Scenario: [3] Equality between different lists with null should return false
+    Given any graph
     When executing query:
       """
-      MATCH p = (n)-->(b)
-      RETURN coUnt( dIstInct p )
+      RETURN [1, 2] = [null, 'foo'] AS res
       """
     Then the result should be, in any order:
-      | coUnt( dIstInct p ) |
-      | 0                   |
+      | res   |
+      | false |
     And no side effects
 
-  Scenario: Keeping used expression 4
+  Scenario: [4] Equality between almost equal lists with null should return null
+    Given any graph
     When executing query:
       """
-      MATCH p = (n)-->(b)
-      RETURN aVg(    n.aGe     )
+      RETURN [1, 2] = [null, 2] AS res
       """
     Then the result should be, in any order:
-      | aVg(    n.aGe     ) |
-      | null                |
+      | res  |
+      | null |
+    And no side effects
+
+  Scenario: [5] Equality of nested lists of different length should return false despite nulls
+    Given any graph
+    When executing query:
+      """
+      RETURN [[1]] = [[1], [null]] AS res
+      """
+    Then the result should be, in any order:
+      | res   |
+      | false |
+    And no side effects
+
+  Scenario: [6] Equality between different nested lists with null should return false
+    Given any graph
+    When executing query:
+      """
+      RETURN [[1, 2], [1, 3]] = [[1, 2], [null, 'foo']] AS res
+      """
+    Then the result should be, in any order:
+      | res   |
+      | false |
+    And no side effects
+
+  Scenario: [7] Equality between almost equal nested lists with null should return null
+    Given any graph
+    When executing query:
+      """
+      RETURN [[1, 2], ['foo', 'bar']] = [[1, 2], [null, 'bar']] AS res
+      """
+    Then the result should be, in any order:
+      | res  |
+      | null |
     And no side effects

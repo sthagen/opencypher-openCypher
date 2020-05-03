@@ -28,55 +28,21 @@
 
 #encoding: utf-8
 
-Feature: ColumnNameAcceptance
+Feature: Addition
 
-  Background:
+  Scenario: Allow addition
     Given an empty graph
     And having executed:
       """
-      CREATE ()
+      CREATE ({id: 1337, version: 99})
       """
-
-  Scenario: Keeping used expression 1
     When executing query:
       """
-      MATCH (n)
-      RETURN cOuNt( * )
+      MATCH (a)
+      WHERE a.id = 1337
+      RETURN a.version + 5
       """
     Then the result should be, in any order:
-      | cOuNt( * ) |
-      | 1          |
-    And no side effects
-
-  Scenario: Keeping used expression 2
-    When executing query:
-      """
-      MATCH p = (n)-->(b)
-      RETURN nOdEs( p )
-      """
-    Then the result should be, in any order:
-      | nOdEs( p ) |
-    And no side effects
-
-  @skipStyleCheck
-  Scenario: Keeping used expression 3
-    When executing query:
-      """
-      MATCH p = (n)-->(b)
-      RETURN coUnt( dIstInct p )
-      """
-    Then the result should be, in any order:
-      | coUnt( dIstInct p ) |
-      | 0                   |
-    And no side effects
-
-  Scenario: Keeping used expression 4
-    When executing query:
-      """
-      MATCH p = (n)-->(b)
-      RETURN aVg(    n.aGe     )
-      """
-    Then the result should be, in any order:
-      | aVg(    n.aGe     ) |
-      | null                |
+      | a.version + 5 |
+      | 104           |
     And no side effects

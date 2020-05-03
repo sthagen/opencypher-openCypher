@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import io.cucumber.datatable.DataTable
 import org.opencypher.tools.tck.api.InvalidFeatureFormatException
 import org.opencypher.tools.tck.constants.TCKStepDefinitions._
+import org.opencypher.tools.tck.constants.TCKTags
 
 import scala.util.Failure
 import scala.util.Success
@@ -39,10 +40,18 @@ import scala.util.Try
 
 class FeatureFormatChecker extends TCKCucumberTemplate {
 
+  private var currentScenarioName = ""
+  private var skipStyleCheck: Boolean = false
+
+  Before { (scenario: cucumber.api.Scenario) =>
+    validateDuplicateNames(scenario).map(msg => throw InvalidFeatureFormatException(msg))
+    currentScenarioName = scenario.getName
+    skipStyleCheck = scenario.getSourceTagNames.contains(TCKTags.SKIP_STYLE_CHECK)
+  }
+
   private var lastSeenQuery = ""
   private val orderBy = "(?si).*ORDER BY.*"
   private val call = "(?si).*CALL.*"
-  private var currentScenarioName = ""
   private val stepValidator = new ScenarioFormatValidator
 
   Background(BACKGROUND) {}
@@ -62,7 +71,7 @@ class FeatureFormatChecker extends TCKCucumberTemplate {
 
   And(INIT_QUERY) { (query: String) => initStep(query) }
 
-  private def initStep(query: String) = {
+  private def initStep(query: String): Unit = {
     codeStyle(query).map(msg => throw InvalidFeatureFormatException(msg))
     validateGrammar(query)
   }
@@ -77,7 +86,7 @@ class FeatureFormatChecker extends TCKCucumberTemplate {
 
   When(EXECUTING_QUERY) { (query: String) => whenStep(query)}
 
-  private def whenStep(query: String) = {
+  private def whenStep(query: String): Unit = {
     codeStyle(query).map(msg => throw InvalidFeatureFormatException(msg))
     validateGrammar(query)
     lastSeenQuery = query
@@ -134,15 +143,10 @@ class FeatureFormatChecker extends TCKCucumberTemplate {
     stepValidator.reportStep("Control-query")
   }
 
-  Before { (scenario: cucumber.api.Scenario) =>
-    validateDuplicateNames(scenario).map(msg => throw InvalidFeatureFormatException(msg))
-    currentScenarioName = scenario.getName
-  }
-
   After(_ => stepValidator.checkRequiredSteps())
 
   private def codeStyle(query: String): Option[String] = {
-    if (scenariosWithIntentionalStyleViolations(currentScenarioName)) None
+    if (skipStyleCheck) None
     else validateCodeStyle(query)
   }
 
@@ -160,10 +164,6 @@ class FeatureFormatChecker extends TCKCucumberTemplate {
     }
   }
 
-  private val scenariosWithIntentionalStyleViolations =
-    Set("Keeping used expression 3",
-        "Keeping used expression 4")
-
 }
 
 class ScenarioFormatValidator {
@@ -175,7 +175,7 @@ class ScenarioFormatValidator {
   private var hadSideEffects = false
   private var hadControlQuery = false
 
-  def reportStep(step: String) = step match {
+  def reportStep(step: String): Unit = step match {
     case "Given" =>
       if (hadGiven) error("Extra `Given` steps specified! Only one is allowed.")
       else hadGiven = true
@@ -198,7 +198,7 @@ class ScenarioFormatValidator {
     case _ => throw new IllegalArgumentException("Unknown step identifier. Valid identifiers are Given, Query, Results, Error, Side-effects.")
   }
 
-  def checkRequiredSteps() = {
+  def checkRequiredSteps(): Unit = {
     if (!hadPending) {
       val correctWhenThenSetup = numberOfWhenQueries == (if (hadControlQuery) numberOfThenAssertions - 1 else numberOfThenAssertions)
       if (hadGiven && numberOfWhenQueries > 0 && (correctWhenThenSetup && hadSideEffects || hadError)) {
@@ -208,7 +208,7 @@ class ScenarioFormatValidator {
     }
   }
 
-  private def reset() = {
+  private def reset(): Unit = {
     hadGiven = false
     hadPending = false
     numberOfWhenQueries = 0
@@ -218,7 +218,7 @@ class ScenarioFormatValidator {
     hadControlQuery = false
   }
 
-  private def error(msg: String) = {
+  private def error(msg: String): Nothing = {
     reset()
     throw InvalidFeatureFormatException(msg)
   }
