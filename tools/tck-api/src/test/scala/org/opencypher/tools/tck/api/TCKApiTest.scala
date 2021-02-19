@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 "Neo Technology,"
+ * Copyright (c) 2015-2021 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,10 +29,10 @@ package org.opencypher.tools.tck.api
 
 import java.net.URI
 
-import org.scalatest.FunSuite
-import org.scalatest.Matchers
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class TCKApiTest extends FunSuite with Matchers {
+class TCKApiTest extends AnyFunSuite with Matchers {
   private val fooUri: URI = getClass.getResource("..").toURI
   private val scenarios: Seq[Scenario] = CypherTCK.parseFeatures(fooUri).flatMap(_.scenarios)
 
@@ -47,7 +47,7 @@ class TCKApiTest extends FunSuite with Matchers {
   }
 
   test("example index of non-outline scenarios") {
-    val nonOutlineScenarios = scenarios.filterNot(s => s.featureName == "Outline" && s.name == "Outline Test")
+    val nonOutlineScenarios = scenarios.filterNot(s => s.featureName == "Outline" && s.name.startsWith("Outline Test"))
     all (nonOutlineScenarios) should have ('exampleIndex (None))
   }
 
@@ -56,9 +56,29 @@ class TCKApiTest extends FunSuite with Matchers {
     outlineScenarios.map(_.exampleIndex) should equal(Seq(Some(0), Some(1), Some(2)))
     outlineScenarios.foreach(s => {
       outlineScenarios.filter(_.exampleIndex.get > s.exampleIndex.get).foreach(s2 => {
-        s2.source.getLocations.get(0).getLine > s.source.getLocations.get(0).getLine
+        s2.source.getLocation.getLine > s.source.getLocation.getLine
       })
     })
+  }
+
+  test("example name of non-outline scenarios should have not an example name") {
+    val nonOutlineScenarios = scenarios.filterNot(s => s.featureName == "Outline" && s.name.startsWith("Outline Test"))
+    nonOutlineScenarios.foreach(s => s.exampleName should be (None))
+  }
+
+  test("example name of outline scenarios with named examples should have an example name") {
+    val namedOutlineScenarios = scenarios.filter(s => s.featureName == "Outline" && s.name.startsWith("Outline Test") && s.tags.contains("@fullyNamed"))
+    namedOutlineScenarios.foreach(s => s.exampleName should not be None)
+  }
+
+  test("scenarios with an example name should have an example index") {
+    val scenariosWithExampleName = scenarios.filter(_.exampleName.nonEmpty)
+    scenariosWithExampleName.foreach(s => s.exampleIndex should not be None)
+  }
+
+  test("numbered scenarios have a number") {
+    val numberedScenarios = scenarios.filter(s => s.tags.contains("@numbered"))
+    numberedScenarios.foreach(s => s.number should not be None)
   }
 
   test("sourceFile of top-level scenarios") {

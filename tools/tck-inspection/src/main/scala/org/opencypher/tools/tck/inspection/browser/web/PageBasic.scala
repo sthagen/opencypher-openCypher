@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 "Neo Technology,"
+ * Copyright (c) 2015-2021 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@ package org.opencypher.tools.tck.inspection.browser.web
 import org.opencypher.tools.tck.api.CypherValueRecords
 import org.opencypher.tools.tck.api.Dummy
 import org.opencypher.tools.tck.api.ExecQuery
+import org.opencypher.tools.tck.api.ControlQuery
 import org.opencypher.tools.tck.api.Execute
 import org.opencypher.tools.tck.api.ExpectError
 import org.opencypher.tools.tck.api.ExpectResult
@@ -49,7 +50,7 @@ import org.opencypher.tools.tck.constants.TCKSideEffects.DELETED_LABELS
 import org.opencypher.tools.tck.constants.TCKSideEffects.DELETED_NODES
 import org.opencypher.tools.tck.constants.TCKSideEffects.DELETED_PROPERTIES
 import org.opencypher.tools.tck.constants.TCKSideEffects.DELETED_RELATIONSHIPS
-import org.opencypher.tools.tck.inspection.collect.Group
+import org.opencypher.tools.tck.api.groups.Group
 import scalatags.Text
 import scalatags.Text.all._
 import scalatags.Text.tags2
@@ -86,8 +87,8 @@ trait PageBasic {
     body(content)
   )
 
-  def listScenariosPage(scenarios: Group => Option[Seq[Scenario]], group: Group, kind: Option[Frag], showSingleScenarioURL: Scenario => String, openScenarioInEditorURL: Scenario => String ): Text.TypedTag[String] = {
-    val scenarioSeq = scenarios(group).map(_.sortBy(s => (s.categories.mkString("/"), s.featureName, s.name, s.exampleIndex))).getOrElse(Seq.empty[Scenario])
+  def listScenariosPage(scenarios: Group => Option[Set[Scenario]], group: Group, kind: Option[Frag], showSingleScenarioURL: Scenario => String, openScenarioInEditorURL: Scenario => String ): Text.TypedTag[String] = {
+    val scenarioSeq = scenarios(group).map(_.toSeq.sortBy(s => (s.categories.mkString("/"), s.featureName, s.name, s.exampleIndex))).getOrElse(Seq.empty[Scenario])
     page(
       pageTitle(scenarioSeq.size, kind.mapToFrag(k => frag(" ", k)), " scenario(s) in group ", i(group.toString)),
       ul(
@@ -104,7 +105,7 @@ trait PageBasic {
   }
 
   def scenarioTitle(scenario: Scenario): String =
-    scenario.name + scenario.exampleIndex.map(i => " #" + i).getOrElse("")
+    scenario.name + scenario.exampleIndex.map(i => " #" + i).getOrElse("") + scenario.exampleName.map(n => " (" + n + ")").getOrElse("")
 
   def scenarioLocationFrag(scenario: Scenario,
                            collection: Option[String] = None,
@@ -178,6 +179,7 @@ trait PageBasic {
           qt match {
             case InitQuery => "Initialize with"
             case ExecQuery => "Execute query"
+            case ControlQuery => "Control query"
             case SideEffectQuery => "Execute update"
           },
           div(pre(fontFamily:="Monospace")(query))

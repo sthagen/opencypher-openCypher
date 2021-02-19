@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2020 "Neo Technology,"
+# Copyright (c) 2015-2021 "Neo Technology,"
 # Network Engine for Objects in Lund AB [http://neotechnology.com]
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -135,3 +135,100 @@ Feature: Create1 - Creating nodes
     And the side effects should be:
       | +nodes      | 1 |
       | +properties | 1 |
+
+  Scenario: [10] CREATE does not lose precision on large integers
+    Given an empty graph
+    When executing query:
+      """
+      CREATE (p:TheLabel {id: 4611686018427387905})
+      RETURN p.id
+      """
+    Then the result should be, in any order:
+      | p.id                |
+      | 4611686018427387905 |
+    And the side effects should be:
+      | +nodes      | 1 |
+      | +properties | 1 |
+      | +labels     | 1 |
+
+  @NegativeTest
+  Scenario: [11] Fail when creating a node that is already bound
+    Given any graph
+    When executing query:
+      """
+      MATCH (a)
+      CREATE (a)
+      """
+    Then a SyntaxError should be raised at compile time: VariableAlreadyBound
+
+  @NegativeTest
+  Scenario: [12] Fail when creating a node with properties that is already bound
+    Given any graph
+    When executing query:
+      """
+      MATCH (a)
+      CREATE (a {name: 'foo'})
+      RETURN a
+      """
+    Then a SyntaxError should be raised at compile time: VariableAlreadyBound
+
+  @NegativeTest
+  Scenario: [13] Fail when adding a new label predicate on a node that is already bound 1
+    Given an empty graph
+    When executing query:
+      """
+      CREATE (n:Foo)-[:T1]->(),
+             (n:Bar)-[:T2]->()
+      """
+    Then a SyntaxError should be raised at compile time: VariableAlreadyBound
+
+  @NegativeTest
+  # Consider improve naming of this and the next three scenarios, they seem to test invariant nature of node patterns
+  Scenario: [14] Fail when adding new label predicate on a node that is already bound 2
+    Given an empty graph
+    When executing query:
+      """
+      CREATE ()<-[:T2]-(n:Foo),
+             (n:Bar)<-[:T1]-()
+      """
+    Then a SyntaxError should be raised at compile time: VariableAlreadyBound
+
+  @NegativeTest
+  Scenario: [15] Fail when adding new label predicate on a node that is already bound 3
+    Given an empty graph
+    When executing query:
+      """
+      CREATE (n:Foo)
+      CREATE (n:Bar)-[:OWNS]->(:Dog)
+      """
+    Then a SyntaxError should be raised at compile time: VariableAlreadyBound
+
+  @NegativeTest
+  Scenario: [16] Fail when adding new label predicate on a node that is already bound 4
+    Given an empty graph
+    When executing query:
+      """
+      CREATE (n {})
+      CREATE (n:Bar)-[:OWNS]->(:Dog)
+      """
+    Then a SyntaxError should be raised at compile time: VariableAlreadyBound
+
+  @NegativeTest
+  Scenario: [17] Fail when adding new label predicate on a node that is already bound 5
+    Given an empty graph
+    When executing query:
+      """
+      CREATE (n:Foo)
+      CREATE (n {})-[:OWNS]->(:Dog)
+      """
+    Then a SyntaxError should be raised at compile time: VariableAlreadyBound
+
+  @NegativeTest
+  Scenario: [18] Fail when creating a node using undefined variable in pattern
+    Given any graph
+    When executing query:
+      """
+      CREATE (b {name: missing})
+      RETURN b
+      """
+    Then a SyntaxError should be raised at compile time: UndefinedVariable

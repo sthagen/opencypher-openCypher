@@ -34,6 +34,12 @@
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <propertyName>projectRootdir</propertyName>
+                        <projectRootdir>${project.rootdir}</projectRootdir>
+                    </systemPropertyVariables>
+                </configuration>
             </plugin>
         </plugins>
     </build>
@@ -43,11 +49,6 @@
             <groupId>org.opencypher</groupId>
             <artifactId>tck-api_${scala.binary.version}</artifactId>
             <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
         </dependency>
 
         <dependency>
@@ -70,26 +71,23 @@
         <!-- Test deps -->
 
         <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_${scala.binary.version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.scalacheck</groupId>
-            <artifactId>scalacheck_${scala.binary.version}</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-launcher</artifactId>
             <scope>test</scope>
         </dependency>
 
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
+            <groupId>co.helmethair</groupId>
+            <artifactId>scalatest-junit-runner</artifactId>
             <scope>test</scope>
         </dependency>
+
     </dependencies>
 
 </project>

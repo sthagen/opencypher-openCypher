@@ -26,8 +26,8 @@ mkdir -p ${RELEASE_VERSION}/docs
 echo "Done!"
 
 echo "Generating railroad diagrams... "
-./tools/grammar/src/main/shell/launch.sh RailRoadDiagramPages -outputDir=${RELEASE_VERSION}/railroad cypher.xml
-./tools/grammar/src/main/shell/launch.sh RailRoadDiagramPages --INCLUDE_LEGACY=true -outputDir=${RELEASE_VERSION}/legacy/railroad cypher.xml
+./tools/grammar/src/main/shell/launch.sh RailRoadDiagramPages --user.country=US --user.language=en -outputDir=${RELEASE_VERSION}/railroad cypher.xml
+./tools/grammar/src/main/shell/launch.sh RailRoadDiagramPages --INCLUDE_LEGACY=true --user.country=US --user.language=en -outputDir=${RELEASE_VERSION}/legacy/railroad cypher.xml
 echo "Done!"
 
 echo "Generating EBNF grammars... "
@@ -47,7 +47,7 @@ echo "Done!"
 
 echo "Building archives with TCK and grammar source files..."
 zip ${RELEASE_VERSION}/grammar-${RELEASE_VERSION}.zip grammar/*.xml
-zip ${RELEASE_VERSION}/tck-${RELEASE_VERSION}.zip tck/features/*.feature
+zip -r ${RELEASE_VERSION}/tck-${RELEASE_VERSION}.zip tck/features/* tck/index.adoc
 echo "Done!"
 
 echo "Artifacts all built!"

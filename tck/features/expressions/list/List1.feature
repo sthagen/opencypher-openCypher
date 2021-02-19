@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2020 "Neo Technology,"
+# Copyright (c) 2015-2021 "Neo Technology,"
 # Network Engine for Objects in Lund AB [http://neotechnology.com]
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,8 @@
 
 #encoding: utf-8
 
-Feature: List1 - Element Access
+Feature: List1 - Dynamic Element Access
+# Dynamic element access refers to the bracket-operator – <expression resulting in a list>[<expression resulting in an integer>] – irrespectively of whether the list index – i.e. <expression resulting in an integer> – could be evaluated statically in a given scenario.
 
   Scenario: [1] Indexing into literal list
     Given any graph
@@ -95,3 +96,52 @@ Feature: List1 - Element Access
       | value |
       | 'Apa' |
     And no side effects
+
+  @NegativeTest
+  Scenario: [6] Fail at runtime when attempting to index with a String into a List
+    Given any graph
+    And parameters are:
+      | expr | ['Apa'] |
+      | idx  | 'name'  |
+    When executing query:
+      """
+      WITH $expr AS expr, $idx AS idx
+      RETURN expr[idx]
+      """
+    Then a TypeError should be raised at runtime: ListElementAccessByNonInteger
+
+  @NegativeTest
+  Scenario: [7] Fail at runtime when trying to index into a list with a list
+    Given any graph
+    And parameters are:
+      | expr | ['Apa'] |
+      | idx  | ['Apa'] |
+    When executing query:
+      """
+      WITH $expr AS expr, $idx AS idx
+      RETURN expr[idx]
+      """
+    Then a TypeError should be raised at compile time: ListElementAccessByNonInteger
+
+  @NegativeTest
+  Scenario: [8] Fail at compile time when attempting to index with a non-integer into a list
+    Given any graph
+    When executing query:
+      """
+      WITH [1, 2, 3, 4, 5] AS list, 3.14 AS idx
+      RETURN list[idx]
+      """
+    Then a SyntaxError should be raised at compile time: ListElementAccessByNonInteger
+
+  @NegativeTest
+  Scenario: [9] Fail at runtime when trying to index something which is not a list
+    Given any graph
+    And parameters are:
+      | expr | 100 |
+      | idx  | 0   |
+    When executing query:
+      """
+      WITH $expr AS expr, $idx AS idx
+      RETURN expr[idx]
+      """
+    Then a TypeError should be raised at runtime: InvalidArgumentType

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2020 "Neo Technology,"
+# Copyright (c) 2015-2021 "Neo Technology,"
 # Network Engine for Objects in Lund AB [http://neotechnology.com]
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,7 @@
 
 #encoding: utf-8
 
-Feature: Match3 - Match fixed length patterns scenarios
+Feature: Match3 - Match fixed length patterns
 
   Scenario: [1] Get neighbours
     Given an empty graph
@@ -478,8 +478,8 @@ Feature: Match3 - Match fixed length patterns scenarios
       """
     When executing query:
       """
-      MATCH (a1)-[r:T]->() WITH r, a1
-      LIMIT 1
+      MATCH (a1)-[r:T]->()
+      WITH r, a1
       MATCH (a1)-[r:T]->(b2)
       RETURN a1, r, b2
       """
@@ -488,7 +488,42 @@ Feature: Match3 - Match fixed length patterns scenarios
       | (:A) | [:T] | (:B) |
     And no side effects
 
-  Scenario: [25] Matching from null nodes should return no results owing to finding no matches
+  Scenario: [25] Matching twice with an additional node label
+    Given an empty graph
+    And having executed:
+      """
+      CREATE ()-[:T]->()
+      """
+    When executing query:
+      """
+      MATCH (a1)-[r]->()
+      WITH r, a1
+      MATCH (a1:X)-[r]->(b2)
+      RETURN a1, r, b2
+      """
+    Then the result should be, in any order:
+      | a1 | r | b2 |
+    And no side effects
+
+  Scenario: [26] Matching twice with a duplicate predicate
+    Given an empty graph
+    And having executed:
+      """
+      CREATE (:X:Y)-[:T]->()
+      """
+    When executing query:
+      """
+      MATCH (a1:X:Y)-[r]->()
+      WITH r, a1
+      MATCH (a1:Y)-[r]->(b2)
+      RETURN a1, r, b2
+      """
+    Then the result should be, in any order:
+      | a1     | r    | b2 |
+      | (:X:Y) | [:T] | () |
+    And no side effects
+
+  Scenario: [27] Matching from null nodes should return no results owing to finding no matches
     Given an empty graph
     When executing query:
       """
@@ -501,7 +536,7 @@ Feature: Match3 - Match fixed length patterns scenarios
       | b |
     And no side effects
 
-  Scenario: [26] Matching from null nodes should return no results owing to matches being filtered out
+  Scenario: [28] Matching from null nodes should return no results owing to matches being filtered out
     Given an empty graph
     And having executed:
       """
@@ -517,3 +552,25 @@ Feature: Match3 - Match fixed length patterns scenarios
     Then the result should be, in any order:
       | b |
     And no side effects
+
+  @NegativeTest
+  Scenario: [29] Fail when re-using a relationship in the same pattern
+    Given any graph
+    When executing query:
+      """
+      MATCH (a)-[r]->()-[r]->(a)
+      RETURN r
+      """
+    Then a SyntaxError should be raised at compile time: RelationshipUniquenessViolation
+
+  @NegativeTest
+  Scenario: [30] Fail when using a list or nodes as a node
+    Given any graph
+    When executing query:
+      """
+      MATCH (n)
+      WITH [n] AS users
+      MATCH (users)-->(messages)
+      RETURN messages
+      """
+    Then a SyntaxError should be raised at compile time: VariableTypeConflict

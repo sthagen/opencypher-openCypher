@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 "Neo Technology,"
+ * Copyright (c) 2015-2021 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,7 +43,7 @@ public class ReportValidator implements BeforeAllCallback, AfterAllCallback {
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
         cucumberReport = Files.createTempFile("cucumber", ".json");
         cucumberReport.toFile().deleteOnExit();
-        System.setProperty("cucumber.options", "--plugin json:" + cucumberReport);
+        System.setProperty("cucumber.plugin", "json:" + cucumberReport);
     }
 
     @Override
@@ -52,14 +52,16 @@ public class ReportValidator implements BeforeAllCallback, AfterAllCallback {
         String actual = new String(readAllBytes(cucumberReport));
 
         assertEquals(
-            ignoreDuration(expected),
-            ignoreDuration(actual));
+            ignoreTimeAndDuration(expected),
+            ignoreTimeAndDuration(actual));
     }
 
     /**
      * duration 0 == no duration. See `cucumber.runtime.formatter.JSONFormatter`
      */
-    private String ignoreDuration(String report) {
-        return report.replaceAll("\n\\s*\"duration\":\\s*\\d+\\s*,", "");
+    private String ignoreTimeAndDuration(String report) {
+        return report.
+                replaceAll("\n\\s*\"duration\":\\s*\\d+\\s*,", "").
+                replaceAll("\n\\s*\"start_timestamp\":\\s*\"[\\w:.-]*\"\\s*,", "");
     }
 }

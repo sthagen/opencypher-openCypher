@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2020 "Neo Technology,"
+# Copyright (c) 2015-2021 "Neo Technology,"
 # Network Engine for Objects in Lund AB [http://neotechnology.com]
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,271 +28,299 @@
 
 #encoding: utf-8
 
-Feature: Literals5 - List
+Feature: Literals5 - Float
 
-  Scenario: [1] Return an empty list
+  Scenario: [1] Return a short positive float
     Given any graph
     When executing query:
       """
-      RETURN [] AS literal
+      RETURN 1.0 AS literal
       """
     Then the result should be, in any order:
       | literal |
-      | []      |
+      | 1.0     |
     And no side effects
 
-  Scenario: [2] Return a list containing a boolean
+  Scenario: [2] Return a short positive float without integer digits
     Given any graph
     When executing query:
       """
-      RETURN [false] AS literal
+      RETURN .1 AS literal
       """
     Then the result should be, in any order:
       | literal |
-      | [false] |
+      | 0.1     |
     And no side effects
 
-  Scenario: [3] Return a list containing a null
+  Scenario: [3] Return a long positive float
     Given any graph
     When executing query:
       """
-      RETURN [null] AS literal
-      """
-    Then the result should be, in any order:
-      | literal |
-      | [null]  |
-    And no side effects
-
-  Scenario: [4] Return a list containing a integer
-    Given any graph
-    When executing query:
-      """
-      RETURN [1] AS literal
-      """
-    Then the result should be, in any order:
-      | literal |
-      | [1]     |
-    And no side effects
-
-  Scenario: [5] Return a list containing a hexadecimal integer
-    Given any graph
-    When executing query:
-      """
-      RETURN [-0x162CD4F6] AS literal
-      """
-    Then the result should be, in any order:
-      | literal      |
-      | [-372036854] |
-    And no side effects
-
-  Scenario: [6] Return a list containing a octal integer
-    Given any graph
-    When executing query:
-      """
-      RETURN [02613152366] AS literal
-      """
-    Then the result should be, in any order:
-      | literal     |
-      | [372036854] |
-    And no side effects
-
-  Scenario: [7] Return a list containing a float
-    Given any graph
-    When executing query:
-      """
-      RETURN [-.1e-5] AS literal
-      """
-    Then the result should be, in any order:
-      | literal     |
-      | [-0.000001] |
-    And no side effects
-
-  Scenario: [8] Return a list containing a string
-    Given any graph
-    When executing query:
-      """
-      RETURN ['abc, as#?lßdj '] AS literal
+      RETURN 3985764.3405892687 AS literal
       """
     Then the result should be, in any order:
       | literal            |
-      | ['abc, as#?lßdj '] |
+      | 3985764.3405892686 |
     And no side effects
 
-  Scenario: [9] Return a list containing an empty lists
+  Scenario: [4] Return a long positive float without integer digits
     Given any graph
     When executing query:
       """
-      RETURN [[]] AS literal
+      RETURN .3405892687 AS literal
+      """
+    Then the result should be, in any order:
+      | literal      |
+      | 0.3405892687 |
+    And no side effects
+
+  Scenario: [5] Return a very long positive float
+    Given any graph
+    When executing query:
+      """
+      RETURN 126354186523812635418263552340512384016094862983471987543918591348961093487896783409268730945879405123840160948812635418265234051238401609486298347198754391859134896109348789678340926873094587962983471812635265234051238401609486298348126354182652340512384016094862983471987543918591348961093487896783409218.0 AS literal
+      """
+    Then the result should be, in any order:
+      | literal                   |
+      | 1.2635418652381264e305 |
+    And no side effects
+
+  Scenario: [6] Return a very long positive float without integer digits
+    Given any graph
+    When executing query:
+      """
+      RETURN .00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001 AS literal
       """
     Then the result should be, in any order:
       | literal |
-      | [[]]    |
+      | 1e-305  |
     And no side effects
 
-  Scenario: [10] Return seven-deep nested empty lists
+  Scenario: [7] Return a positive zero float
     Given any graph
     When executing query:
       """
-      RETURN [[[[[[[]]]]]]] AS literal
+      RETURN 0.0 AS literal
+      """
+    Then the result should be, in any order:
+      | literal |
+      | 0.0     |
+    And no side effects
+
+  Scenario: [8] Return a positive zero float without integer digits
+    Given any graph
+    When executing query:
+      """
+      RETURN .0 AS literal
+      """
+    Then the result should be, in any order:
+      | literal |
+      | 0.0     |
+    And no side effects
+
+  Scenario: [9] Return a negative zero float
+    Given any graph
+    When executing query:
+      """
+      RETURN -0.0 AS literal
+      """
+    Then the result should be, in any order:
+      | literal |
+      | 0.0     |
+    And no side effects
+
+  Scenario: [10] Return a negative zero float without integer digits
+    Given any graph
+    When executing query:
+      """
+      RETURN -.0 AS literal
+      """
+    Then the result should be, in any order:
+      | literal |
+      | 0.0     |
+    And no side effects
+
+  Scenario: [11] Return a very long negative float
+    Given any graph
+    When executing query:
+      """
+      RETURN -126354186523812635418263552340512384016094862983471987543918591348961093487896783409268730945879405123840160948812635418265234051238401609486298347198754391859134896109348789678340926873094587962983471812635265234051238401609486298348126354182652340512384016094862983471987543918591348961093487896783409218.0 AS literal
+      """
+    Then the result should be, in any order:
+      | literal                    |
+      | -1.2635418652381264e305 |
+    And no side effects
+
+  Scenario: [12] Return a very long negative float without integer digits
+    Given any graph
+    When executing query:
+      """
+      RETURN -.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001 AS literal
+      """
+    Then the result should be, in any order:
+      | literal |
+      | -1e-305 |
+    And no side effects
+
+  Scenario: [13] Return a positive float with positive lower case exponent
+    Given any graph
+    When executing query:
+      """
+      RETURN 1e9 AS literal
+      """
+    Then the result should be, in any order:
+      | literal      |
+      | 1000000000.0 |
+    And no side effects
+
+  Scenario: [14] Return a positive float with positive upper case exponent
+    Given any graph
+    When executing query:
+      """
+      RETURN 1E9 AS literal
+      """
+    Then the result should be, in any order:
+      | literal      |
+      | 1000000000.0 |
+    And no side effects
+
+  Scenario: [15] Return a positive float with positive lower case exponent without integer digits
+    Given any graph
+    When executing query:
+      """
+      RETURN .1e9 AS literal
+      """
+    Then the result should be, in any order:
+      | literal     |
+      | 100000000.0 |
+    And no side effects
+
+  Scenario: [16] Return a positive float with negative lower case exponent
+    Given any graph
+    When executing query:
+      """
+      RETURN 1e-5 AS literal
+      """
+    Then the result should be, in any order:
+      | literal |
+      | 0.00001 |
+    And no side effects
+
+  Scenario: [17] Return a positive float with negative lower case exponent without integer digits
+    Given any graph
+    When executing query:
+      """
+      RETURN .1e-5 AS literal
+      """
+    Then the result should be, in any order:
+      | literal  |
+      | 0.000001 |
+    And no side effects
+
+  Scenario: [18] Return a positive float with negative upper case exponent without integer digits
+    Given any graph
+    When executing query:
+      """
+      RETURN .1E-5 AS literal
+      """
+    Then the result should be, in any order:
+      | literal  |
+      | 0.000001 |
+    And no side effects
+
+  Scenario: [19] Return a negative float in with positive lower case exponent
+    Given any graph
+    When executing query:
+      """
+      RETURN -1e9 AS literal
+      """
+    Then the result should be, in any order:
+      | literal       |
+      | -1000000000.0 |
+    And no side effects
+
+  Scenario: [20] Return a negative float in with positive upper case exponent
+    Given any graph
+    When executing query:
+      """
+      RETURN -1E9 AS literal
+      """
+    Then the result should be, in any order:
+      | literal       |
+      | -1000000000.0 |
+    And no side effects
+
+  Scenario: [21] Return a negative float with positive lower case exponent without integer digits
+    Given any graph
+    When executing query:
+      """
+      RETURN -.1e9 AS literal
+      """
+    Then the result should be, in any order:
+      | literal      |
+      | -100000000.0 |
+    And no side effects
+
+  Scenario: [22] Return a negative float with negative lower case exponent
+    Given any graph
+    When executing query:
+      """
+      RETURN -1e-5 AS literal
+      """
+    Then the result should be, in any order:
+      | literal  |
+      | -0.00001 |
+    And no side effects
+
+  Scenario: [23] Return a negative float with negative lower case exponent without integer digits
+    Given any graph
+    When executing query:
+      """
+      RETURN -.1e-5 AS literal
+      """
+    Then the result should be, in any order:
+      | literal   |
+      | -0.000001 |
+    And no side effects
+
+  Scenario: [24] Return a negative float with negative upper case exponent without integer digits
+    Given any graph
+    When executing query:
+      """
+      RETURN -.1E-5 AS literal
+      """
+    Then the result should be, in any order:
+      | literal   |
+      | -0.000001 |
+    And no side effects
+
+  Scenario: [25] Return a positive float with one integer digit and maximum positive exponent
+    Given any graph
+    When executing query:
+      """
+      RETURN 1e308 AS literal
+      """
+    Then the result should be, in any order:
+      | literal |
+      | 1e308   |
+    And no side effects
+
+  Scenario: [26] Return a positive float with nine integer digit and maximum positive exponent
+    Given any graph
+    When executing query:
+      """
+      RETURN 123456789e300 AS literal
       """
     Then the result should be, in any order:
       | literal        |
-      | [[[[[[[]]]]]]] |
+      | 1.23456789e308 |
     And no side effects
 
-  Scenario: [11] Return 20-deep nested empty lists
+  @NegativeTest
+  Scenario: [27] Fail when float value is too large
     Given any graph
     When executing query:
       """
-      RETURN [[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]] AS literal
+      RETURN 1.34E999
       """
-    Then the result should be, in any order:
-      | literal                                  |
-      | [[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]] |
-    And no side effects
-
-  Scenario: [12] Return 40-deep nested empty lists
-    Given any graph
-    When executing query:
-      """
-      RETURN [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]] AS literal
-      """
-    Then the result should be, in any order:
-      | literal                                                                          |
-      | [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]] |
-    And no side effects
-
-  Scenario: [13] Return a list containing an empty map
-    Given any graph
-    When executing query:
-      """
-      RETURN [{}] AS literal
-      """
-    Then the result should be, in any order:
-      | literal |
-      | [{}]    |
-    And no side effects
-
-  Scenario: [14] Return a list containing multiple integer
-    Given any graph
-    When executing query:
-      """
-      RETURN [1, -2, 00, 71034856] AS literal
-      """
-    Then the result should be, in any order:
-      | literal              |
-      | [1, -2, 0, 71034856] |
-    And no side effects
-
-### Needs more capable tck-api
-#  Scenario: [15] Return a list containing multiple strings
-#    Given any graph
-#    When executing query:
-#      """
-#      RETURN ['abc, as#?lßdj ','',"'",",","[a","]"] AS literal
-#      """
-#    Then the result should be, in any order:
-#      | literal                                      |
-#      | ['abc, as#?lßdj ', '', '\'', ',', '[a', ']'] |
-#    And no side effects
-
-  Scenario: [16] Return a list containing multiple mixed values
-    Given any graph
-    When executing query:
-      """
-      RETURN [2E-01, ', as#?lßdj ', null, 71034856, false] AS literal
-      """
-    Then the result should be, in any order:
-      | literal                                     |
-      | [0.2, ', as#?lßdj ', null, 71034856, false] |
-    And no side effects
-
-  Scenario: [17] Return a list containing real and fake nested lists
-    Given any graph
-    When executing query:
-      """
-      RETURN [null, [ ' a ', ' ' ], ' [ a ', ' [ ], ] ', ' [ ', [ ' ' ], ' ] ' ] AS literal
-      """
-    Then the result should be, in any order:
-      | literal                                                        |
-      | [null, [' a ', ' '], ' [ a ', ' [ ], ] ', ' [ ', [' '], ' ] '] |
-    And no side effects
-
-  @skipStyleCheck
-  Scenario: [18] Return a complex list containing multiple mixed and nested values
-    Given any graph
-    When executing query:
-      """
-      RETURN [ {
-                  id: '0001',
-                  type: 'donut',
-                  name: 'Cake',
-                  ppu: 0.55,
-                  batters:
-                      {
-                          batter:
-                              [
-                                  { id: '1001', type: 'Regular' },
-                                  { id: '1002', type: 'Chocolate' },
-                                  { id: '1003', type: 'Blueberry' },
-                                  { id: '1004', type: 'Devils Food' }
-                              ]
-                      },
-                  topping:
-                      [
-                          { id: '5001', type: 'None' },
-                          { id: '5002', type: 'Glazed' },
-                          { id: '5005', type: 'Sugar' },
-                          { id: '5007', type: 'Powdered Sugar' },
-                          { id: '5006', type: 'Chocolate Sprinkles' },
-                          { id: '5003', type: 'Chocolate' },
-                          { id: '5004', type: 'Maple' }
-                      ]
-              },
-              {
-                  id: '0002',
-                  type: 'donut',
-                  name: 'Raised',
-                  ppu: 0.55,
-                  batters:
-                      {
-                          batter:
-                              [
-                                  { id: '1001', type: 'Regular' }
-                              ]
-                      },
-                  topping:
-                      [
-                          { id: '5001', type: 'None' },
-                          { id: '5002', type: 'Glazed' },
-                          { id: '5005', type: 'Sugar' },
-                          { id: '5003', type: 'Chocolate' },
-                          { id: '5004', type: 'Maple' }
-                      ]
-              },
-              {
-                  id: '0003',
-                  type: 'donut',
-                  name: 'Old Fashioned',
-                  ppu: 0.55,
-                  batters:
-                      {
-                          batter:
-                              [
-                                  { id: '1001', type: 'Regular' },
-                                  { id: '1002', type: 'Chocolate' }
-                              ]
-                      },
-                  topping:
-                      [
-                          { id: '5001', type: 'None' },
-                          { id: '5002', type: 'Glazed' },
-                          { id: '5003', type: 'Chocolate' },
-                          { id: '5004', type: 'Maple' }
-                      ]
-              } ] AS literal
-      """
-    Then the result should be, in any order:
-      | literal                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-      | [{id: '0001', type: 'donut', name: 'Cake', ppu: 0.55, batters: {batter: [{id: '1001', type: 'Regular'}, {id: '1002', type: 'Chocolate'}, {id: '1003', type: 'Blueberry'}, {id: '1004', type: 'Devils Food'}]}, topping: [{id: '5001', type: 'None'}, {id: '5002', type: 'Glazed'}, {id: '5005', type: 'Sugar'}, {id: '5007', type: 'Powdered Sugar'}, {id: '5006', type: 'Chocolate Sprinkles'}, {id: '5003', type: 'Chocolate'}, {id: '5004', type: 'Maple'}]}, {id: '0002', type: 'donut', name: 'Raised', ppu: 0.55, batters: {batter: [{id: '1001', type: 'Regular'}]}, topping: [{id: '5001', type: 'None'}, {id: '5002', type: 'Glazed'}, {id: '5005', type: 'Sugar'}, {id: '5003', type: 'Chocolate'}, {id: '5004', type: 'Maple'}]}, {id: '0003', type: 'donut', name: 'Old Fashioned', ppu: 0.55, batters: {batter: [{id: '1001', type: 'Regular'}, {id: '1002', type: 'Chocolate'}]}, topping: [{id: '5001', type: 'None'}, {id: '5002', type: 'Glazed'}, {id: '5003', type: 'Chocolate'}, {id: '5004', type: 'Maple'}]}] |
-    And no side effects
+    Then a SyntaxError should be raised at compile time: FloatingPointOverflow

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 "Neo Technology,"
+ * Copyright (c) 2015-2021 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,6 +55,8 @@ import org.opencypher.tools.io.Output;
 
 import static org.opencypher.tools.grammar.RailRoadDiagrams.canvas;
 import static org.opencypher.tools.grammar.RailRoadDiagrams.renderer;
+import static org.opencypher.tools.io.HtmlTag.attr;
+import static org.opencypher.tools.io.HtmlTag.head;
 import static org.opencypher.tools.io.HtmlTag.html;
 import static org.opencypher.tools.io.HtmlTag.meta;
 
@@ -123,18 +125,18 @@ public final class RailRoadDiagramPages extends Tool implements ShapeRenderer.Li
         String svg = production.name() + ".svg";
         try ( HtmlTag.Html html = html( dir.resolve( production.name() + ".html" ) ) )
         {
-            html.head( title -> production.name(), meta( "charset", "UTF-8" ) );
+            html.head( head( "title", production.name() ), meta( "charset", "UTF-8" ) );
             try ( HtmlTag body = html.body() )
             {
-                body.tag( "h1" ).text( production.name() ).close();
-                body.tag( "object", data -> svg, type -> "image/svg+xml" ).close();
+                body.textTag( "h1", production.name() );
+                body.tag( "object", attr( "data", svg ), attr( "type", "image/svg+xml" ) ).close();
                 String description = production.description();
                 if ( description != null )
                 {
                     body.p();
                     body.text( description );
                 }
-                body.tag( "h2" ).text( "EBNF" ).close();
+                body.textTag( "h2", "EBNF" );
                 for ( NonTerminal nonTerminal : production.references() )
                 {
                     Production site = nonTerminal.declaringProduction();
@@ -149,14 +151,14 @@ public final class RailRoadDiagramPages extends Tool implements ShapeRenderer.Li
                     @Override
                     void inline( Production production )
                     {
-                        body.tag( "a", name -> production.name() ).close();
+                        body.tag( "a", attr( "name", production.name() ) ).close();
                         ISO14977.html( body, production, RailRoadDiagramPages.this );
                     }
                 } );
                 Collection<Production> references = production.referencedFrom();
                 if ( !references.isEmpty() )
                 {
-                    body.tag( "h2" ).text( "Referenced from" ).close();
+                    body.textTag( "h2", "Referenced from" );
                     try ( HtmlTag ul = body.tag( "ul" ) )
                     {
                         for ( Production reference : references )
@@ -164,7 +166,7 @@ public final class RailRoadDiagramPages extends Tool implements ShapeRenderer.Li
                             try ( HtmlTag li = ul.tag( "li" ) )
                             {
                                 String name = reference.name();
-                                li.tag( "a", href -> referenceLink( name ) ).text( name ).close();
+                                li.a( referenceLink( name ), name );
                             }
                         }
                     }

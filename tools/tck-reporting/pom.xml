@@ -17,6 +17,8 @@
 
     <properties>
         <project.rootdir>${project.basedir}/../..</project.rootdir>
+        <default.jupiter.test.mode>same_thread</default.jupiter.test.mode>
+        <default.jupiter.classes.test.mode>same_thread</default.jupiter.classes.test.mode>
     </properties>
 
     <licenses>
@@ -34,8 +36,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${dep.scala.version}</version>
         </dependency>
 
         <dependency>
@@ -43,17 +46,22 @@
             <artifactId>cucumber-core</artifactId>
         </dependency>
 
-        <!-- Test deps -->
-
         <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-launcher</artifactId>
-            <scope>test</scope>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
         </dependency>
+
+        <!-- Test deps -->
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

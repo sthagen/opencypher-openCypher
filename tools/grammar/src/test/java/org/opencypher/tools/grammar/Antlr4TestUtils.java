@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 "Neo Technology,"
+ * Copyright (c) 2015-2021 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -101,7 +101,7 @@ public class Antlr4TestUtils
         {
             Antlr4.write( Fixture.grammarResource( Antlr4.class, resource, options ), out );
             grammarString = out.toString( UTF_8.name() );
-            System.out.println(grammarString);
+            //System.out.println(grammarString);
         }
         catch ( Throwable t )
         {

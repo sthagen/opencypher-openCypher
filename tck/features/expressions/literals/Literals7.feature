@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2020 "Neo Technology,"
+# Copyright (c) 2015-2021 "Neo Technology,"
 # Network Engine for Objects in Lund AB [http://neotechnology.com]
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,106 +28,277 @@
 
 #encoding: utf-8
 
-Feature: Literals7 - Negative tests
+Feature: Literals7 - List
 
-  Scenario: [1] Return a too large integer
+  Scenario: [1] Return an empty list
     Given any graph
     When executing query:
       """
-      RETURN 9223372036854775808 AS literal
+      RETURN [] AS literal
       """
-    Then a SyntaxError should be raised at compile time: IntegerOverflow
+    Then the result should be, in any order:
+      | literal |
+      | []      |
+    And no side effects
 
-  Scenario: [2] Return a too small integer
+  Scenario: [2] Return a list containing a boolean
     Given any graph
     When executing query:
       """
-      RETURN -9223372036854775809 AS literal
+      RETURN [false] AS literal
       """
-    Then a SyntaxError should be raised at compile time: IntegerOverflow
+    Then the result should be, in any order:
+      | literal |
+      | [false] |
+    And no side effects
 
-  Scenario: [3] Return an integer containing a alphabetic character
+  Scenario: [3] Return a list containing a null
     Given any graph
     When executing query:
       """
-      RETURN 9223372h54775808 AS literal
+      RETURN [null] AS literal
       """
-    Then a SyntaxError should be raised at compile time: InvalidNumberLiteral
+    Then the result should be, in any order:
+      | literal |
+      | [null]  |
+    And no side effects
 
-  Scenario: [4] Return an integer containing a invalid symbol character
+  Scenario: [4] Return a list containing a integer
     Given any graph
     When executing query:
       """
-      RETURN 9223372#54775808 AS literal
+      RETURN [1] AS literal
       """
-    Then a SyntaxError should be raised at compile time: InvalidNumberLiteral
+    Then the result should be, in any order:
+      | literal |
+      | [1]     |
+    And no side effects
 
-  Scenario: [5] Return an incomplete hexadecimal integer
+  Scenario: [5] Return a list containing a hexadecimal integer
     Given any graph
     When executing query:
       """
-      RETURN 0x AS literal
+      RETURN [-0x162CD4F6] AS literal
       """
-    Then a SyntaxError should be raised at compile time: InvalidNumberLiteral
+    Then the result should be, in any order:
+      | literal      |
+      | [-372036854] |
+    And no side effects
 
-  Scenario: [6] Return an hexadecimal literal containing a lower case invalid alphanumeric character
+  Scenario: [6] Return a list containing a octal integer
     Given any graph
     When executing query:
       """
-      RETURN 0x1A2b3j4D5E6f7 AS literal
+      RETURN [02613152366] AS literal
       """
-    Then a SyntaxError should be raised at compile time: InvalidNumberLiteral
+    Then the result should be, in any order:
+      | literal     |
+      | [372036854] |
+    And no side effects
 
-  Scenario: [7] Return an hexadecimal literal containing a upper case invalid alphanumeric character
+  Scenario: [7] Return a list containing a float
     Given any graph
     When executing query:
       """
-      RETURN 0x1A2b3c4Z5E6f7 AS literal
+      RETURN [-.1e-5] AS literal
       """
-    Then a SyntaxError should be raised at compile time: InvalidNumberLiteral
+    Then the result should be, in any order:
+      | literal     |
+      | [-0.000001] |
+    And no side effects
 
-### Error detail not necessarily recognizable
-#  Scenario: [8] Returning an hexadecimal literal containing a invalid symbol character
+  Scenario: [8] Return a list containing a string
+    Given any graph
+    When executing query:
+      """
+      RETURN ['abc, as#?lßdj '] AS literal
+      """
+    Then the result should be, in any order:
+      | literal            |
+      | ['abc, as#?lßdj '] |
+    And no side effects
+
+  Scenario: [9] Return a list containing an empty lists
+    Given any graph
+    When executing query:
+      """
+      RETURN [[]] AS literal
+      """
+    Then the result should be, in any order:
+      | literal |
+      | [[]]    |
+    And no side effects
+
+  Scenario: [10] Return seven-deep nested empty lists
+    Given any graph
+    When executing query:
+      """
+      RETURN [[[[[[[]]]]]]] AS literal
+      """
+    Then the result should be, in any order:
+      | literal        |
+      | [[[[[[[]]]]]]] |
+    And no side effects
+
+  Scenario: [11] Return 20-deep nested empty lists
+    Given any graph
+    When executing query:
+      """
+      RETURN [[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]] AS literal
+      """
+    Then the result should be, in any order:
+      | literal                                  |
+      | [[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]] |
+    And no side effects
+
+  Scenario: [12] Return 40-deep nested empty lists
+    Given any graph
+    When executing query:
+      """
+      RETURN [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]] AS literal
+      """
+    Then the result should be, in any order:
+      | literal                                                                          |
+      | [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]] |
+    And no side effects
+
+  Scenario: [13] Return a list containing an empty map
+    Given any graph
+    When executing query:
+      """
+      RETURN [{}] AS literal
+      """
+    Then the result should be, in any order:
+      | literal |
+      | [{}]    |
+    And no side effects
+
+  Scenario: [14] Return a list containing multiple integer
+    Given any graph
+    When executing query:
+      """
+      RETURN [1, -2, 00, 71034856] AS literal
+      """
+    Then the result should be, in any order:
+      | literal              |
+      | [1, -2, 0, 71034856] |
+    And no side effects
+
+### Needs more capable tck-api
+#  Scenario: [15] Return a list containing multiple strings
 #    Given any graph
 #    When executing query:
 #      """
-#      RETURN 0x1A2b3c4#5E6f7 AS literal
+#      RETURN ['abc, as#?lßdj ','',"'",",","[a","]"] AS literal
 #      """
-#    Then a SyntaxError should be raised at compile time: InvalidNumberLiteral
+#    Then the result should be, in any order:
+#      | literal                                      |
+#      | ['abc, as#?lßdj ', '', '\'', ',', '[a', ']'] |
+#    And no side effects
 
-  Scenario: [9] Return a too large hexadecimal integer
+  Scenario: [16] Return a list containing multiple mixed values
     Given any graph
     When executing query:
       """
-      RETURN 0x8000000000000000 AS literal
+      RETURN [2E-01, ', as#?lßdj ', null, 71034856, false] AS literal
       """
-    Then a SyntaxError should be raised at compile time: IntegerOverflow
+    Then the result should be, in any order:
+      | literal                                     |
+      | [0.2, ', as#?lßdj ', null, 71034856, false] |
+    And no side effects
 
-  Scenario: [10] Return a too small hexadecimal integer
+  Scenario: [17] Return a list containing real and fake nested lists
     Given any graph
     When executing query:
       """
-      RETURN -0x8000000000000001 AS literal
+      RETURN [null, [ ' a ', ' ' ], ' [ a ', ' [ ], ] ', ' [ ', [ ' ' ], ' ] ' ] AS literal
       """
-    Then a SyntaxError should be raised at compile time: IntegerOverflow
+    Then the result should be, in any order:
+      | literal                                                        |
+      | [null, [' a ', ' '], ' [ a ', ' [ ], ] ', ' [ ', [' '], ' ] '] |
+    And no side effects
 
-  Scenario: [11] Return a too large octal integer
+  @skipStyleCheck
+  Scenario: [18] Return a complex list containing multiple mixed and nested values
     Given any graph
     When executing query:
       """
-      RETURN 01000000000000000000000 AS literal
+      RETURN [ {
+                  id: '0001',
+                  type: 'donut',
+                  name: 'Cake',
+                  ppu: 0.55,
+                  batters:
+                      {
+                          batter:
+                              [
+                                  { id: '1001', type: 'Regular' },
+                                  { id: '1002', type: 'Chocolate' },
+                                  { id: '1003', type: 'Blueberry' },
+                                  { id: '1004', type: 'Devils Food' }
+                              ]
+                      },
+                  topping:
+                      [
+                          { id: '5001', type: 'None' },
+                          { id: '5002', type: 'Glazed' },
+                          { id: '5005', type: 'Sugar' },
+                          { id: '5007', type: 'Powdered Sugar' },
+                          { id: '5006', type: 'Chocolate Sprinkles' },
+                          { id: '5003', type: 'Chocolate' },
+                          { id: '5004', type: 'Maple' }
+                      ]
+              },
+              {
+                  id: '0002',
+                  type: 'donut',
+                  name: 'Raised',
+                  ppu: 0.55,
+                  batters:
+                      {
+                          batter:
+                              [
+                                  { id: '1001', type: 'Regular' }
+                              ]
+                      },
+                  topping:
+                      [
+                          { id: '5001', type: 'None' },
+                          { id: '5002', type: 'Glazed' },
+                          { id: '5005', type: 'Sugar' },
+                          { id: '5003', type: 'Chocolate' },
+                          { id: '5004', type: 'Maple' }
+                      ]
+              },
+              {
+                  id: '0003',
+                  type: 'donut',
+                  name: 'Old Fashioned',
+                  ppu: 0.55,
+                  batters:
+                      {
+                          batter:
+                              [
+                                  { id: '1001', type: 'Regular' },
+                                  { id: '1002', type: 'Chocolate' }
+                              ]
+                      },
+                  topping:
+                      [
+                          { id: '5001', type: 'None' },
+                          { id: '5002', type: 'Glazed' },
+                          { id: '5003', type: 'Chocolate' },
+                          { id: '5004', type: 'Maple' }
+                      ]
+              } ] AS literal
       """
-    Then a SyntaxError should be raised at compile time: IntegerOverflow
+    Then the result should be, in any order:
+      | literal                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+      | [{id: '0001', type: 'donut', name: 'Cake', ppu: 0.55, batters: {batter: [{id: '1001', type: 'Regular'}, {id: '1002', type: 'Chocolate'}, {id: '1003', type: 'Blueberry'}, {id: '1004', type: 'Devils Food'}]}, topping: [{id: '5001', type: 'None'}, {id: '5002', type: 'Glazed'}, {id: '5005', type: 'Sugar'}, {id: '5007', type: 'Powdered Sugar'}, {id: '5006', type: 'Chocolate Sprinkles'}, {id: '5003', type: 'Chocolate'}, {id: '5004', type: 'Maple'}]}, {id: '0002', type: 'donut', name: 'Raised', ppu: 0.55, batters: {batter: [{id: '1001', type: 'Regular'}]}, topping: [{id: '5001', type: 'None'}, {id: '5002', type: 'Glazed'}, {id: '5005', type: 'Sugar'}, {id: '5003', type: 'Chocolate'}, {id: '5004', type: 'Maple'}]}, {id: '0003', type: 'donut', name: 'Old Fashioned', ppu: 0.55, batters: {batter: [{id: '1001', type: 'Regular'}, {id: '1002', type: 'Chocolate'}]}, topping: [{id: '5001', type: 'None'}, {id: '5002', type: 'Glazed'}, {id: '5003', type: 'Chocolate'}, {id: '5004', type: 'Maple'}]}] |
+    And no side effects
 
-  Scenario: [12] Return a too small octal integer
-    Given any graph
-    When executing query:
-      """
-      RETURN -01000000000000000000001 AS literal
-      """
-    Then a SyntaxError should be raised at compile time: IntegerOverflow
-
-  Scenario: [13] Return a list containing a comma
+  @NegativeTest @skipGrammarCheck
+  Scenario: [19] Fail on a list containing only a comma
     Given any graph
     When executing query:
       """
@@ -135,7 +306,8 @@ Feature: Literals7 - Negative tests
       """
     Then a SyntaxError should be raised at compile time: UnexpectedSyntax
 
-  Scenario: [14] Return a nested list with non-matching brackets
+  @NegativeTest @skipGrammarCheck
+  Scenario: [20] Fail on a nested list with non-matching brackets
     Given any graph
     When executing query:
       """
@@ -143,82 +315,11 @@ Feature: Literals7 - Negative tests
       """
     Then a SyntaxError should be raised at compile time: UnexpectedSyntax
 
-  Scenario: [15] Return a nested list with missing commas
+  @NegativeTest @skipGrammarCheck
+  Scenario: [21] Fail on a nested list with missing commas
     Given any graph
     When executing query:
       """
       RETURN [[','[]',']] AS literal
-      """
-    Then a SyntaxError should be raised at compile time: UnexpectedSyntax
-
-  Scenario: [16] Return a map containing key starting with a number
-    Given any graph
-    When executing query:
-      """
-      RETURN {1B2c3e67:1} AS literal
-      """
-    Then a SyntaxError should be raised at compile time: UnexpectedSyntax
-
-  Scenario: [17] Return a map containing key with symbol
-    Given any graph
-    When executing query:
-      """
-      RETURN {k1#k: 1} AS literal
-      """
-    Then a SyntaxError should be raised at compile time: UnexpectedSyntax
-
-  Scenario: [18] Return a map containing key with dot
-    Given any graph
-    When executing query:
-      """
-      RETURN {k1.k: 1} AS literal
-      """
-    Then a SyntaxError should be raised at compile time: UnexpectedSyntax
-
-  Scenario: [19] Return a map containing unquoted string
-    Given any graph
-    When executing query:
-      """
-      RETURN {k1: k2} AS literal
-      """
-    Then a SyntaxError should be raised at compile time: UndefinedVariable
-
-  Scenario: [20] Return a map containing a comma
-    Given any graph
-    When executing query:
-      """
-      RETURN {, } AS literal
-      """
-    Then a SyntaxError should be raised at compile time: UnexpectedSyntax
-
-  Scenario: [21] Return a map containing a value without key
-    Given any graph
-    When executing query:
-      """
-      RETURN {1} AS literal
-      """
-    Then a SyntaxError should be raised at compile time: MissingParameter
-
-  Scenario: [22] Return a map containing a list without key
-    Given any graph
-    When executing query:
-      """
-      RETURN {[]} AS literal
-      """
-    Then a SyntaxError should be raised at compile time: UnexpectedSyntax
-
-  Scenario: [23] Return a map containing a map without key
-    Given any graph
-    When executing query:
-      """
-      RETURN {{}} AS literal
-      """
-    Then a SyntaxError should be raised at compile time: UnexpectedSyntax
-
-  Scenario: [24] Return a nested map with non-matching braces
-    Given any graph
-    When executing query:
-      """
-      RETURN {k: {k: {}} AS literal
       """
     Then a SyntaxError should be raised at compile time: UnexpectedSyntax

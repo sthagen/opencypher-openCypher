@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 "Neo Technology,"
+ * Copyright (c) 2015-2021 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,11 +29,11 @@ package org.opencypher.tools.tck.inspection.browser.web
 
 import org.opencypher.tools.tck.api.Pickle
 import org.opencypher.tools.tck.api.Scenario
-import org.opencypher.tools.tck.inspection.collect
-import org.opencypher.tools.tck.inspection.collect.Feature
-import org.opencypher.tools.tck.inspection.collect.Group
-import org.opencypher.tools.tck.inspection.collect.ScenarioCategory
-import org.opencypher.tools.tck.inspection.collect.Total
+import org.opencypher.tools.tck.api.groups.ExampleItem
+import org.opencypher.tools.tck.api.groups.ScenarioItem
+import org.opencypher.tools.tck.api.groups.ScenarioOutline
+import org.opencypher.tools.tck.api.groups.TckTree
+import org.opencypher.tools.tck.api.groups.Total
 import scalatags.Text
 import scalatags.Text.all._
 
@@ -44,48 +44,42 @@ case class BrowserPages(browserModel: BrowserModel, browserRoutes: BrowserRoutes
       pageTitle("Browse"),
       div(code(browserModel.path)),
       sectionTitle("Counts"),
-      browserCountsFrag(browserModel.counts)
+      browserCountsFrag(browserModel.tckTree)
     )
   }
 
-  def browserCountsFrag(counts: Map[Group, Seq[Scenario]]): Text.TypedTag[String] = {
-    val groupsByParent = counts.keys.groupBy(countCategory => countCategory.parent)
-
-    // print counts to html table rows as a count group tree in dept first order
-    def printDepthFirst(currentGroup: Group): Seq[scalatags.Text.TypedTag[String]] = {
-      val thisRow =
-        tr(
-          td(textIndent:=currentGroup.indent.em)(
-            currentGroup.toString
-          ),
-          td(textAlign.right)(
-            counts.get(currentGroup).map(col =>
-              a(href:=browserRoutes.listScenariosURL(this, currentGroup))(col.size)
-            ).getOrElse("-")
-          ),
-        )
-      // on each level ordered in classes of Total, ScenarioCategories, Features, Tags
-      val groupsByClasses = groupsByParent.getOrElse(Some(currentGroup), Iterable[Group]()).groupBy{
-        case Total => 0
-        case _:ScenarioCategory => 1
-        case _:Feature => 2
-        case _:collect.Tag => 3
-      }
-      // within each class ordered alphabetically by name
-      val groupsOrdered = groupsByClasses.toSeq.sortBy(_._1).flatMap {
-        case (_, countCategories) => countCategories.toSeq.sortBy(_.name)
-      }
-      thisRow +: groupsOrdered.flatMap(printDepthFirst)
+  def browserCountsFrag(tckTree: TckTree): Text.TypedTag[String] = {
+    val groupsFiltered = tckTree.groupsOrderedDepthFirst filter {
+      case _:ScenarioItem | _:ScenarioOutline | _:ExampleItem => false
+      case _ => true
     }
+
+    val totalCount = tckTree.groupedScenarios(Total).size
+
+    val tableRows = groupsFiltered.map( group =>
+      tr(
+        td(textIndent:=group.indent.em)(
+          group.name
+        ),
+        td(textAlign.right)(
+          a(href:=browserRoutes.listScenariosURL(this, group))(tckTree.groupedScenarios(group).size)
+        ),
+        td(textAlign.right)({
+          val pct = (tckTree.groupedScenarios(group).size * 100).toDouble / totalCount
+          frag(f"$pct%3.1f %%")
+        })
+      )
+    )
 
     //output header
     val header =
       tr(
         th("Group"),
         th("Count"),
+        th("of Total"),
       )
 
-    table(CSS.hoverTable)(header +: printDepthFirst(Total))
+    table(CSS.hoverTable)(header +: tableRows)
   }
 
   def scenarioPage(scenario: Scenario, withLocation: Boolean = true): Text.TypedTag[String] = {
@@ -96,7 +90,7 @@ case class BrowserPages(browserModel: BrowserModel, browserRoutes: BrowserRoutes
           div(CSS.locationLine)(scenarioLocationFrag(scenario)),
           blankLink(browserRoutes.openScenarioInEditorURL(this, scenario),
             div(CSS.fileLocation)(
-              scenario.sourceFile.toAbsolutePath.toString + ":" + Pickle(scenario.source, withLocation = true).location.map(_.head.line).getOrElse(0)
+              scenario.sourceFile.toAbsolutePath.toString + ":" + Pickle(scenario.source, withLocation = true).location.map(_.line).getOrElse(0)
             )
           )
         )

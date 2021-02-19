@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2020 "Neo Technology,"
+# Copyright (c) 2015-2021 "Neo Technology,"
 # Network Engine for Objects in Lund AB [http://neotechnology.com]
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -112,3 +112,30 @@ Feature: Delete1 - Deleting nodes
       """
     Then the result should be empty
     And no side effects
+
+  @NegativeTest
+  Scenario: [7] Failing when deleting connected nodes
+    Given an empty graph
+    And having executed:
+      """
+      CREATE (x:X)
+      CREATE (x)-[:R]->()
+      CREATE (x)-[:R]->()
+      CREATE (x)-[:R]->()
+      """
+    When executing query:
+      """
+      MATCH (n:X)
+      DELETE n
+      """
+    Then a ConstraintVerificationFailed should be raised at runtime: DeleteConnectedNode
+
+  @NegativeTest
+  Scenario: [8] Failing when deleting a label
+    Given any graph
+    When executing query:
+      """
+      MATCH (n)
+      DELETE n:Person
+      """
+    Then a SyntaxError should be raised at compile time: InvalidDelete

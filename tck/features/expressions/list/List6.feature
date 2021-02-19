@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2020 "Neo Technology,"
+# Copyright (c) 2015-2021 "Neo Technology,"
 # Network Engine for Objects in Lund AB [http://neotechnology.com]
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,7 @@
 
 #encoding: utf-8
 
-Feature: List6 - List Size
+Feature: List6 - List size
 
   Scenario: [1] Return list size
     Given any graph
@@ -69,3 +69,25 @@ Feature: List6 - List Size
       | l |
       | 3 |
     And no side effects
+
+  Scenario: [4] `size()` on null list
+    Given any graph
+    When executing query:
+      """
+      WITH null AS l
+      RETURN size(l), size(null)
+      """
+    Then the result should be, in any order:
+      | size(l) | size(null) |
+      | null    | null       |
+    And no side effects
+
+  @NegativeTest
+  Scenario: [5] Fail for `size()` on paths
+    Given any graph
+    When executing query:
+      """
+      MATCH p = (a)-[*]->(b)
+      RETURN size(p)
+      """
+    Then a SyntaxError should be raised at compile time: InvalidArgumentType

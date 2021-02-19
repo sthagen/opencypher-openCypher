@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2020 "Neo Technology,"
+# Copyright (c) 2015-2021 "Neo Technology,"
 # Network Engine for Objects in Lund AB [http://neotechnology.com]
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,290 +28,180 @@
 
 #encoding: utf-8
 
-Feature: Literals3 - Float
+Feature: Literals3 - Hexadecimal integer
 
-  Scenario: [1] Return a short positive float
+  Scenario: [1] Return a short positive hexadecimal integer
     Given any graph
     When executing query:
       """
-      RETURN 1.0 AS literal
+      RETURN 0x1 AS literal
       """
     Then the result should be, in any order:
       | literal |
-      | 1.0     |
+      | 1       |
     And no side effects
 
-  Scenario: [2] Return a short positive float without integer digits
+  Scenario: [2] Return a long positive hexadecimal integer
     Given any graph
     When executing query:
       """
-      RETURN .1 AS literal
+      RETURN 0x162CD4F6 AS literal
+      """
+    Then the result should be, in any order:
+      | literal    |
+      | 372036854  |
+    And no side effects
+
+  Scenario: [3] Return the largest hexadecimal integer
+    Given any graph
+    When executing query:
+      """
+      RETURN 0x7FFFFFFFFFFFFFFF AS literal
+      """
+    Then the result should be, in any order:
+      | literal              |
+      | 9223372036854775807  |
+    And no side effects
+
+  Scenario: [4] Return a positive hexadecimal zero
+    Given any graph
+    When executing query:
+      """
+      RETURN 0x0 AS literal
       """
     Then the result should be, in any order:
       | literal |
-      | 0.1     |
+      | 0       |
     And no side effects
 
-  Scenario: [3] Return a long positive float
+  Scenario: [5] Return a negative hexadecimal zero
     Given any graph
     When executing query:
       """
-      RETURN 3985764.3405892687 AS literal
-      """
-    Then the result should be, in any order:
-      | literal            |
-      | 3985764.3405892686 |
-    And no side effects
-
-  Scenario: [4] Return a long positive float without integer digits
-    Given any graph
-    When executing query:
-      """
-      RETURN .3405892687 AS literal
-      """
-    Then the result should be, in any order:
-      | literal      |
-      | 0.3405892687 |
-    And no side effects
-
-  Scenario: [5] Return a very long positive float
-    Given any graph
-    When executing query:
-      """
-      RETURN 126354186523812635418263552340512384016094862983471987543918591348961093487896783409268730945879405123840160948812635418265234051238401609486298347198754391859134896109348789678340926873094587962983471812635265234051238401609486298348126354182652340512384016094862983471987543918591348961093487896783409218.0 AS literal
-      """
-    Then the result should be, in any order:
-      | literal                   |
-      | 1.2635418652381264e305 |
-    And no side effects
-
-  Scenario: [6] Return a very long positive float without integer digits
-    Given any graph
-    When executing query:
-      """
-      RETURN .00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001 AS literal
+      RETURN -0x0 AS literal
       """
     Then the result should be, in any order:
       | literal |
-      | 1e-305  |
+      | 0       |
     And no side effects
 
-  Scenario: [7] Return a positive zero float
+  Scenario: [6] Return a short negative hexadecimal integer
     Given any graph
     When executing query:
       """
-      RETURN 0.0 AS literal
+      RETURN -0x1 AS literal
       """
     Then the result should be, in any order:
       | literal |
-      | 0.0     |
+      | -1      |
     And no side effects
 
-  Scenario: [8] Return a positive zero float without integer digits
+  Scenario: [7] Return a long negative hexadecimal integer
     Given any graph
     When executing query:
       """
-      RETURN .0 AS literal
+      RETURN -0x162CD4F6 AS literal
       """
     Then the result should be, in any order:
-      | literal |
-      | 0.0     |
+      | literal    |
+      | -372036854 |
     And no side effects
 
-  Scenario: [9] Return a negative zero float
+  Scenario: [8] Return the smallest hexadecimal integer
     Given any graph
     When executing query:
       """
-      RETURN -0.0 AS literal
+      RETURN -0x8000000000000000 AS literal
       """
     Then the result should be, in any order:
-      | literal |
-      | 0.0     |
+      | literal              |
+      | -9223372036854775808 |
     And no side effects
 
-  Scenario: [10] Return a negative zero float without integer digits
+  Scenario: [9] Return a lower case hexadecimal integer
     Given any graph
     When executing query:
       """
-      RETURN -.0 AS literal
+      RETURN 0x1a2b3c4d5e6f7 AS literal
       """
     Then the result should be, in any order:
-      | literal |
-      | 0.0     |
+      | literal         |
+      | 460367961908983 |
     And no side effects
 
-  Scenario: [11] Return a very long negative float
+  Scenario: [10] Return a upper case hexadecimal integer
     Given any graph
     When executing query:
       """
-      RETURN -126354186523812635418263552340512384016094862983471987543918591348961093487896783409268730945879405123840160948812635418265234051238401609486298347198754391859134896109348789678340926873094587962983471812635265234051238401609486298348126354182652340512384016094862983471987543918591348961093487896783409218.0 AS literal
+      RETURN 0x1A2B3C4D5E6F7 AS literal
       """
     Then the result should be, in any order:
-      | literal                    |
-      | -1.2635418652381264e305 |
+      | literal         |
+      | 460367961908983 |
     And no side effects
 
-  Scenario: [12] Return a very long negative float without integer digits
+  Scenario: [11] Return a mixed case hexadecimal integer
     Given any graph
     When executing query:
       """
-      RETURN -.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001 AS literal
+      RETURN 0x1A2b3c4D5E6f7 AS literal
       """
     Then the result should be, in any order:
-      | literal |
-      | -1e-305 |
+      | literal         |
+      | 460367961908983 |
     And no side effects
 
-  Scenario: [13] Return a positive float with positive lower case exponent
+  @NegativeTest @skipGrammarCheck
+  Scenario: [12] Fail on an incomplete hexadecimal integer
     Given any graph
     When executing query:
       """
-      RETURN 1e9 AS literal
+      RETURN 0x AS literal
       """
-    Then the result should be, in any order:
-      | literal      |
-      | 1000000000.0 |
-    And no side effects
+    Then a SyntaxError should be raised at compile time: InvalidNumberLiteral
 
-  Scenario: [14] Return a positive float with positive upper case exponent
+  @NegativeTest @skipGrammarCheck
+  Scenario: [13] Fail on an hexadecimal literal containing a lower case invalid alphanumeric character
     Given any graph
     When executing query:
       """
-      RETURN 1E9 AS literal
+      RETURN 0x1A2b3j4D5E6f7 AS literal
       """
-    Then the result should be, in any order:
-      | literal      |
-      | 1000000000.0 |
-    And no side effects
+    Then a SyntaxError should be raised at compile time: InvalidNumberLiteral
 
-  Scenario: [15] Return a positive float with positive lower case exponent without integer digits
+  @NegativeTest @skipGrammarCheck
+  Scenario: [14] Fail on an hexadecimal literal containing a upper case invalid alphanumeric character
     Given any graph
     When executing query:
       """
-      RETURN .1e9 AS literal
+      RETURN 0x1A2b3c4Z5E6f7 AS literal
       """
-    Then the result should be, in any order:
-      | literal     |
-      | 100000000.0 |
-    And no side effects
+    Then a SyntaxError should be raised at compile time: InvalidNumberLiteral
 
-  Scenario: [16] Return a positive float with negative lower case exponent
+### Error detail not necessarily recognizable
+#  @NegativeTest
+#  Scenario: [15] Fail oning an hexadecimal literal containing a invalid symbol character
+#    Given any graph
+#    When executing query:
+#      """
+#      RETURN 0x1A2b3c4#5E6f7 AS literal
+#      """
+#    Then a SyntaxError should be raised at compile time: InvalidNumberLiteral
+
+  @NegativeTest
+  Scenario: [16] Fail on a too large hexadecimal integer
     Given any graph
     When executing query:
       """
-      RETURN 1e-5 AS literal
+      RETURN 0x8000000000000000 AS literal
       """
-    Then the result should be, in any order:
-      | literal |
-      | 0.00001 |
-    And no side effects
+    Then a SyntaxError should be raised at compile time: IntegerOverflow
 
-  Scenario: [17] Return a positive float with negative lower case exponent without integer digits
+  @NegativeTest
+  Scenario: [17] Fail on a too small hexadecimal integer
     Given any graph
     When executing query:
       """
-      RETURN .1e-5 AS literal
+      RETURN -0x8000000000000001 AS literal
       """
-    Then the result should be, in any order:
-      | literal  |
-      | 0.000001 |
-    And no side effects
-
-  Scenario: [18] Return a positive float with negative upper case exponent without integer digits
-    Given any graph
-    When executing query:
-      """
-      RETURN .1E-5 AS literal
-      """
-    Then the result should be, in any order:
-      | literal  |
-      | 0.000001 |
-    And no side effects
-
-  Scenario: [19] Return a negative float in with positive lower case exponent
-    Given any graph
-    When executing query:
-      """
-      RETURN -1e9 AS literal
-      """
-    Then the result should be, in any order:
-      | literal       |
-      | -1000000000.0 |
-    And no side effects
-
-  Scenario: [20] Return a negative float in with positive upper case exponent
-    Given any graph
-    When executing query:
-      """
-      RETURN -1E9 AS literal
-      """
-    Then the result should be, in any order:
-      | literal       |
-      | -1000000000.0 |
-    And no side effects
-
-  Scenario: [21] Return a negative float with positive lower case exponent without integer digits
-    Given any graph
-    When executing query:
-      """
-      RETURN -.1e9 AS literal
-      """
-    Then the result should be, in any order:
-      | literal      |
-      | -100000000.0 |
-    And no side effects
-
-  Scenario: [22] Return a negative float with negative lower case exponent
-    Given any graph
-    When executing query:
-      """
-      RETURN -1e-5 AS literal
-      """
-    Then the result should be, in any order:
-      | literal  |
-      | -0.00001 |
-    And no side effects
-
-  Scenario: [23] Return a negative float with negative lower case exponent without integer digits
-    Given any graph
-    When executing query:
-      """
-      RETURN -.1e-5 AS literal
-      """
-    Then the result should be, in any order:
-      | literal   |
-      | -0.000001 |
-    And no side effects
-
-  Scenario: [24] Return a negative float with negative upper case exponent without integer digits
-    Given any graph
-    When executing query:
-      """
-      RETURN -.1E-5 AS literal
-      """
-    Then the result should be, in any order:
-      | literal   |
-      | -0.000001 |
-    And no side effects
-
-  Scenario: [25] Return a positive float with one integer digit and maximum positive exponent
-    Given any graph
-    When executing query:
-      """
-      RETURN 1e308 AS literal
-      """
-    Then the result should be, in any order:
-      | literal |
-      | 1e308   |
-    And no side effects
-
-  Scenario: [26] Return a positive float with nine integer digit and maximum positive exponent
-    Given any graph
-    When executing query:
-      """
-      RETURN 123456789e300 AS literal
-      """
-    Then the result should be, in any order:
-      | literal        |
-      | 1.23456789e308 |
-    And no side effects
+    Then a SyntaxError should be raised at compile time: IntegerOverflow

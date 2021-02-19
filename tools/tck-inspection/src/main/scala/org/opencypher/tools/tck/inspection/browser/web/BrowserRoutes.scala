@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 "Neo Technology,"
+ * Copyright (c) 2015-2021 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,7 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 import org.opencypher.tools.tck.api.Scenario
-import org.opencypher.tools.tck.inspection.collect.Group
+import org.opencypher.tools.tck.api.groups.Group
 import org.opencypher.tools.tck.inspection.util.CallingSystemProcesses
 import org.opencypher.tools.tck.inspection.util.ProcessReturn
 import scalatags.Text.all._
@@ -74,7 +74,7 @@ case class BrowserRoutes()(implicit val log: cask.Logger) extends cask.Routes wi
   def listScenarios(pathEnc: String, groupId: Int): String = secureBrowserPage(
     pathEnc = pathEnc,
     pageFrag = browserPages => securedGroupPage(browserPages, groupId, group => browserPages.listScenariosPage(
-      scenarios = group => browserPages.browserModel.counts.get(group),
+      scenarios = group => browserPages.browserModel.tckTree.groupedScenarios.get(group),
       group = group,
       kind = None,
       showSingleScenarioURL = scenario => showSingleScenarioURL(browserPages, scenario),

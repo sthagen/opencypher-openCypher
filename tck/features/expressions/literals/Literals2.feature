@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2020 "Neo Technology,"
+# Copyright (c) 2015-2021 "Neo Technology,"
 # Network Engine for Objects in Lund AB [http://neotechnology.com]
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,7 @@
 
 #encoding: utf-8
 
-Feature: Literals2 - Integer
+Feature: Literals2 - Decimal integer
 
   Scenario: [1] Return a short positive integer
     Given any graph
@@ -118,211 +118,38 @@ Feature: Literals2 - Integer
       | -9223372036854775808 |
     And no side effects
 
-  Scenario: [9] Return a short positive hexadecimal integer
+  @NegativeTest
+  Scenario: [9] Fail on a too large integer
     Given any graph
     When executing query:
       """
-      RETURN 0x1 AS literal
+      RETURN 9223372036854775808 AS literal
       """
-    Then the result should be, in any order:
-      | literal |
-      | 1       |
-    And no side effects
+    Then a SyntaxError should be raised at compile time: IntegerOverflow
 
-  Scenario: [10] Return a long positive hexadecimal integer
+  @NegativeTest
+  Scenario: [10] Fail on a too small integer
     Given any graph
     When executing query:
       """
-      RETURN 0x162CD4F6 AS literal
+      RETURN -9223372036854775809 AS literal
       """
-    Then the result should be, in any order:
-      | literal    |
-      | 372036854  |
-    And no side effects
+    Then a SyntaxError should be raised at compile time: IntegerOverflow
 
-  Scenario: [11] Return the largest hexadecimal integer
+  @NegativeTest @skipGrammarCheck
+  Scenario: [11] Fail on an integer containing a alphabetic character
     Given any graph
     When executing query:
       """
-      RETURN 0x7FFFFFFFFFFFFFFF AS literal
+      RETURN 9223372h54775808 AS literal
       """
-    Then the result should be, in any order:
-      | literal              |
-      | 9223372036854775807  |
-    And no side effects
+    Then a SyntaxError should be raised at compile time: InvalidNumberLiteral
 
-  Scenario: [12] Return a positive hexadecimal zero
+  @NegativeTest @skipGrammarCheck
+  Scenario: [12] Fail on an integer containing a invalid symbol character
     Given any graph
     When executing query:
       """
-      RETURN 0x0 AS literal
+      RETURN 9223372#54775808 AS literal
       """
-    Then the result should be, in any order:
-      | literal |
-      | 0       |
-    And no side effects
-
-  Scenario: [13] Return a negative hexadecimal zero
-    Given any graph
-    When executing query:
-      """
-      RETURN -0x0 AS literal
-      """
-    Then the result should be, in any order:
-      | literal |
-      | 0       |
-    And no side effects
-
-  Scenario: [14] Return a short negative hexadecimal integer
-    Given any graph
-    When executing query:
-      """
-      RETURN -0x1 AS literal
-      """
-    Then the result should be, in any order:
-      | literal |
-      | -1      |
-    And no side effects
-
-  Scenario: [15] Return a long negative hexadecimal integer
-    Given any graph
-    When executing query:
-      """
-      RETURN -0x162CD4F6 AS literal
-      """
-    Then the result should be, in any order:
-      | literal    |
-      | -372036854 |
-    And no side effects
-
-  Scenario: [16] Return the smallest hexadecimal integer
-    Given any graph
-    When executing query:
-      """
-      RETURN -0x8000000000000000 AS literal
-      """
-    Then the result should be, in any order:
-      | literal              |
-      | -9223372036854775808 |
-    And no side effects
-
-  Scenario: [17] Return a lower case hexadecimal integer
-    Given any graph
-    When executing query:
-      """
-      RETURN 0x1a2b3c4d5e6f7 AS literal
-      """
-    Then the result should be, in any order:
-      | literal         |
-      | 460367961908983 |
-    And no side effects
-
-  Scenario: [18] Return a upper case hexadecimal integer
-    Given any graph
-    When executing query:
-      """
-      RETURN 0x1A2B3C4D5E6F7 AS literal
-      """
-    Then the result should be, in any order:
-      | literal         |
-      | 460367961908983 |
-    And no side effects
-
-  Scenario: [19] Return a mixed case hexadecimal integer
-    Given any graph
-    When executing query:
-      """
-      RETURN 0x1A2b3c4D5E6f7 AS literal
-      """
-    Then the result should be, in any order:
-      | literal         |
-      | 460367961908983 |
-    And no side effects
-
-  Scenario: [21] Return a short positive octal integer
-    Given any graph
-    When executing query:
-      """
-      RETURN 01 AS literal
-      """
-    Then the result should be, in any order:
-      | literal |
-      | 1       |
-    And no side effects
-
-  Scenario: [22] Return a long positive octal integer
-    Given any graph
-    When executing query:
-      """
-      RETURN 02613152366 AS literal
-      """
-    Then the result should be, in any order:
-      | literal    |
-      | 372036854  |
-    And no side effects
-
-  Scenario: [23] Return the largest octal integer
-    Given any graph
-    When executing query:
-      """
-      RETURN 0777777777777777777777 AS literal
-      """
-    Then the result should be, in any order:
-      | literal              |
-      | 9223372036854775807  |
-    And no side effects
-
-  Scenario: [24] Return a positive octal zero
-    Given any graph
-    When executing query:
-      """
-      RETURN 00 AS literal
-      """
-    Then the result should be, in any order:
-      | literal |
-      | 0       |
-    And no side effects
-
-  Scenario: [25] Return a negative octal zero
-    Given any graph
-    When executing query:
-      """
-      RETURN -00 AS literal
-      """
-    Then the result should be, in any order:
-      | literal |
-      | 0       |
-    And no side effects
-
-  Scenario: [26] Return a short negative octal integer
-    Given any graph
-    When executing query:
-      """
-      RETURN -01 AS literal
-      """
-    Then the result should be, in any order:
-      | literal |
-      | -1      |
-    And no side effects
-
-  Scenario: [27] Return a long negative octal integer
-    Given any graph
-    When executing query:
-      """
-      RETURN -02613152366 AS literal
-      """
-    Then the result should be, in any order:
-      | literal    |
-      | -372036854 |
-    And no side effects
-
-  Scenario: [28] Return the smallest octal integer
-    Given any graph
-    When executing query:
-      """
-      RETURN -01000000000000000000000 AS literal
-      """
-    Then the result should be, in any order:
-      | literal              |
-      | -9223372036854775808 |
-    And no side effects
+    Then a SyntaxError should be raised at compile time: UnexpectedSyntax

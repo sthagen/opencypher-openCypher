@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2020 "Neo Technology,"
+# Copyright (c) 2015-2021 "Neo Technology,"
 # Network Engine for Objects in Lund AB [http://neotechnology.com]
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,8 @@
 
 Feature: Test
 
-  Scenario: Return literal
+  @numbered
+  Scenario: [1] Return literal
     Given an empty graph
     When executing query:
       """
@@ -39,7 +40,8 @@ Feature: Test
       | 1 |
     And no side effects
 
-  Scenario: Fail
+  @numbered
+  Scenario: [2] Fail
     Given an empty graph
     When executing query:
       """

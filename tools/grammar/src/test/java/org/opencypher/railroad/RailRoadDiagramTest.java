@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 "Neo Technology,"
+ * Copyright (c) 2015-2021 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -201,21 +201,18 @@ public class RailRoadDiagramTest
         return sequence( component, zeroOrMore( delimiter, component ) );
     }
 
-    @SafeVarargs
-    private final Map<String, Document> generate( Grammar.Term grammar, Option<Object>... options ) throws Exception
+    private final Map<String, Document> generate( Grammar.Term grammar ) throws Exception
     {
-        return generate( grammar( fixture.testName() ).production( fixture.testName(), grammar ), options );
+        return generate( grammar( fixture.testName() ).production( fixture.testName(), grammar ) );
     }
 
-    @SafeVarargs
-    private final Map<String, Document> generate( Grammar.Builder grammar, Option<Object>... options ) throws Exception
+    private final Map<String, Document> generate( Grammar.Builder grammar) throws Exception
     {
-        return generate( grammar.build(), options );
+        return generate( grammar.build() );
     }
 
-    @SafeVarargs
-    private final Map<String, Document> generate( Grammar grammar, Option<Object>... options ) throws Exception
+    private final Map<String, Document> generate( Grammar grammar ) throws Exception
     {
-        return interactive.test( new RailRoadViewer.Context( grammar, options ) );
+        return interactive.test( new RailRoadViewer.Context( grammar ) );
     }
 }

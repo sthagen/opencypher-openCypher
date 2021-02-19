@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2020 "Neo Technology,"
+# Copyright (c) 2015-2021 "Neo Technology,"
 # Network Engine for Objects in Lund AB [http://neotechnology.com]
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,55 +28,20 @@
 
 #encoding: utf-8
 
-Feature: Create6 - Negative tests
+Feature: Create6 - Create clause interoperation with other clauses
 
-  Scenario: [1] Fail when creating a relationship without a type
-    Given any graph
+  Scenario: [1] Merge followed by multiple creates
+    Given an empty graph
     When executing query:
       """
-      CREATE ()-->()
+      MERGE (t:T {id: 42})
+      CREATE (f:R)
+      CREATE (t)-[:REL]->(f)
       """
-    Then a SyntaxError should be raised at compile time: NoSingleRelationshipType
-
-  Scenario: [2] Fail when creating a relationship without a direction
-    Given any graph
-    When executing query:
-      """
-      CREATE ({id: 2})-[r:KNOWS]-({id: 1})
-      RETURN r
-      """
-    Then a SyntaxError should be raised at compile time: RequiresDirectedRelationship
-
-  Scenario: [3] Fail when creating a relationship with more than one type
-    Given any graph
-    When executing query:
-      """
-      CREATE ()-[:A|:B]->()
-      """
-    Then a SyntaxError should be raised at compile time: NoSingleRelationshipType
-
-  Scenario: [4] Fail when creating a variable-length relationship
-    Given any graph
-    When executing query:
-      """
-      CREATE ()-[:FOO*2]->()
-      """
-    Then a SyntaxError should be raised at compile time: CreatingVarLength
-
-  Scenario: [5] Fail when creating a node that is already bound
-    Given any graph
-    When executing query:
-      """
-      MATCH (a)
-      CREATE (a)
-      """
-    Then a SyntaxError should be raised at compile time: VariableAlreadyBound
-
-  Scenario: [6] Fail when creating a relationship that is already bound
-    Given any graph
-    When executing query:
-      """
-      MATCH ()-[r]->()
-      CREATE ()-[r]->()
-      """
-    Then a SyntaxError should be raised at compile time: VariableAlreadyBound
+    Then the result should be empty
+    And the side effects should be:
+      | +nodes         | 2 |
+      | +relationships | 1 |
+      | +labels        | 2 |
+      | +properties    | 1 |
+      

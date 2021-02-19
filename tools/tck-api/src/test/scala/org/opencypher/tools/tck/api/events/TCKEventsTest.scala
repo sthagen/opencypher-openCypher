@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 "Neo Technology,"
+ * Copyright (c) 2015-2021 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,37 +27,36 @@
  */
 package org.opencypher.tools.tck.api.events
 
-import java.util
-
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.{AfterAll, BeforeAll, DynamicTest, TestFactory}
 import org.opencypher.tools.tck.api._
 import org.opencypher.tools.tck.values.CypherValue
+import org.scalatest.Assertions
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 
-object TCKEventsTest {
+class TCKEventsTest extends AnyFunSuite with Assertions with Matchers {
+  test("TCK events should be captured correctly") {
+    val events = ListBuffer[String]()
 
-  private val events = ListBuffer[String]()
-
-  @BeforeAll
-  def subscribe(): Unit = {
     TCKEvents.feature.subscribe(
-      f => { if (f.name == "List6 - List Size") { events += s"Feature '${f.name}' read" } })
+      f => { if (f.name == "List6 - List size") { events += s"Feature '${f.name}' read" } })
     TCKEvents.scenario.subscribe(s => events += s"Scenario '${s.name}' started")
     TCKEvents.stepStarted.subscribe(s =>
       events += s"Step '${s.step.getClass.getSimpleName} -> ${s.step.source.getText}' started")
     TCKEvents.stepFinished.subscribe(s =>
       events += s"Step '${s.step.getClass.getSimpleName}' finished. Result: ${s.result.right.get.right.get}")
-  }
 
-  @AfterAll
-  def assertEvents(): Unit = {
+    val scenarios = CypherTCK.allTckScenarios.filter(s => s.name == "Return list size").toList
+    scenarios.size should equal(1)
+
+    scenarios.head(FakeGraph).run()
+
     TCKEvents.reset()
-    val expected = List[String](
-      "Feature 'List6 - List Size' read",
-      "Scenario '[1] Return list size' started",
+
+    events.toList should equal(List[String](
+      "Feature 'List6 - List size' read",
+      "Scenario 'Return list size' started",
       "Step 'Execute -> any graph' started",
       "Step 'Execute' finished. Result: <empty result>",
       "Step 'Measure -> executing query:' started",
@@ -68,25 +67,7 @@ object TCKEventsTest {
       "Step 'ExpectResult' finished. Result: | n |" + System.lineSeparator + "| 3 |",
       "Step 'SideEffects -> no side effects' started",
       "Step 'SideEffects' finished. Result: | n |" + System.lineSeparator + "| 3 |"
-    )
-    assertEquals(expected.asJava, events.toList.asJava, s"${expected.asJava} did not equal ${events.toList.asJava}")
-  }
-}
-
-class TCKEventsTest {
-
-  @TestFactory
-  def testSingleScenario(): util.Collection[DynamicTest] = {
-    val scenarios = CypherTCK.allTckScenarios.filter(s => s.name == "[1] Return list size")
-
-    def createTestGraph(): Graph = FakeGraph
-
-    val dynamicTests = scenarios.map { scenario =>
-      val name = scenario.toString()
-      val runnable = scenario(createTestGraph())
-      DynamicTest.dynamicTest(name, () => runnable.run())
-    }
-    dynamicTests.asJavaCollection
+    ))
   }
 
   private object FakeGraph extends Graph with ProcedureSupport {
@@ -95,6 +76,8 @@ class TCKEventsTest {
         case InitQuery =>
           CypherValueRecords.empty
         case SideEffectQuery =>
+          CypherValueRecords.empty
+        case ControlQuery =>
           CypherValueRecords.empty
         case ExecQuery =>
           StringRecords(List("n"), List(Map("n" -> "3")))

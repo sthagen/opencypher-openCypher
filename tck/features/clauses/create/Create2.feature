@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2020 "Neo Technology,"
+# Copyright (c) 2015-2021 "Neo Technology,"
 # Network Engine for Objects in Lund AB [http://neotechnology.com]
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -294,3 +294,69 @@ Feature: Create2 - Creating relationships
       | +nodes         | 2 |
       | +relationships | 1 |
       | +properties    | 1 |
+
+  @NegativeTest
+  Scenario: [18] Fail when creating a relationship without a type
+    Given any graph
+    When executing query:
+      """
+      CREATE ()-->()
+      """
+    Then a SyntaxError should be raised at compile time: NoSingleRelationshipType
+
+  @NegativeTest
+  Scenario: [19] Fail when creating a relationship without a direction
+    Given any graph
+    When executing query:
+      """
+      CREATE (a)-[:FOO]-(b)
+      """
+    Then a SyntaxError should be raised at compile time: RequiresDirectedRelationship
+
+  @NegativeTest
+  Scenario: [20] Fail when creating a relationship with two directions
+    Given any graph
+    When executing query:
+      """
+      CREATE (a)<-[:FOO]->(b)
+      """
+    Then a SyntaxError should be raised at compile time: RequiresDirectedRelationship
+
+  @NegativeTest
+  Scenario: [21] Fail when creating a relationship with more than one type
+    Given any graph
+    When executing query:
+      """
+      CREATE ()-[:A|:B]->()
+      """
+    Then a SyntaxError should be raised at compile time: NoSingleRelationshipType
+
+  @NegativeTest
+  Scenario: [22] Fail when creating a variable-length relationship
+    Given any graph
+    When executing query:
+      """
+      CREATE ()-[:FOO*2]->()
+      """
+    Then a SyntaxError should be raised at compile time: CreatingVarLength
+
+  @NegativeTest
+  Scenario: [23] Fail when creating a relationship that is already bound
+    Given any graph
+    When executing query:
+      """
+      MATCH ()-[r]->()
+      CREATE ()-[r]->()
+      """
+    Then a SyntaxError should be raised at compile time: VariableAlreadyBound
+
+  @NegativeTest
+  Scenario: [24] Fail when creating a relationship using undefined variable in pattern
+    Given any graph
+    When executing query:
+      """
+      MATCH (a)
+      CREATE (a)-[:KNOWS]->(b {name: missing})
+      RETURN b
+      """
+    Then a SyntaxError should be raised at compile time: UndefinedVariable

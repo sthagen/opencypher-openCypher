@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2020 "Neo Technology,"
+# Copyright (c) 2015-2021 "Neo Technology,"
 # Network Engine for Objects in Lund AB [http://neotechnology.com]
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -150,7 +150,30 @@ Feature: Match4 - Match variable length patterns scenarios
       | [[:X], [:Y]] |
     And no side effects
 
-  Scenario: [7] Matching relationships into a list and matching variable length using the list
+  Scenario: [7] Matching variable length patterns including a bound relationship
+    Given an empty graph
+    And having executed:
+      """
+      CREATE (n0:Node),
+             (n1:Node),
+             (n2:Node),
+             (n3:Node),
+             (n0)-[:EDGE]->(n1),
+             (n1)-[:EDGE]->(n2),
+             (n2)-[:EDGE]->(n3)
+      """
+    When executing query:
+      """
+      MATCH ()-[r:EDGE]-()
+      MATCH p = (n)-[*0..1]-()-[r]-()-[*0..1]-(m)
+      RETURN count(p) AS c
+      """
+    Then the result should be, in any order:
+      | c  |
+      | 32 |
+    And no side effects
+
+  Scenario: [8] Matching relationships into a list and matching variable length using the list
     Given an empty graph
     And having executed:
       """
@@ -170,3 +193,89 @@ Feature: Match4 - Match variable length patterns scenarios
       | first | second |
       | (:A)  | (:C)   |
     And no side effects
+
+  @NegativeTest @skipGrammarCheck
+  Scenario: [9] Fail when asterisk operator is missing
+    Given an empty graph
+    And having executed:
+      """
+      CREATE (n0:A {name: 'n0'}),
+             (n00:B {name: 'n00'}),
+             (n01:B {name: 'n01'}),
+             (n000:C {name: 'n000'}),
+             (n001:C {name: 'n001'}),
+             (n010:C {name: 'n010'}),
+             (n011:C {name: 'n011'}),
+             (n0000:D {name: 'n0000'}),
+             (n0001:D {name: 'n0001'}),
+             (n0010:D {name: 'n0010'}),
+             (n0011:D {name: 'n0011'}),
+             (n0100:D {name: 'n0100'}),
+             (n0101:D {name: 'n0101'}),
+             (n0110:D {name: 'n0110'}),
+             (n0111:D {name: 'n0111'})
+      CREATE (n0)-[:LIKES]->(n00),
+             (n0)-[:LIKES]->(n01),
+             (n00)-[:LIKES]->(n000),
+             (n00)-[:LIKES]->(n001),
+             (n01)-[:LIKES]->(n010),
+             (n01)-[:LIKES]->(n011),
+             (n000)-[:LIKES]->(n0000),
+             (n000)-[:LIKES]->(n0001),
+             (n001)-[:LIKES]->(n0010),
+             (n001)-[:LIKES]->(n0011),
+             (n010)-[:LIKES]->(n0100),
+             (n010)-[:LIKES]->(n0101),
+             (n011)-[:LIKES]->(n0110),
+             (n011)-[:LIKES]->(n0111)
+      """
+    When executing query:
+      """
+      MATCH (a:A)
+      MATCH (a)-[:LIKES..]->(c)
+      RETURN c.name
+      """
+    Then a SyntaxError should be raised at compile time: InvalidRelationshipPattern
+
+  @NegativeTest @skipGrammarCheck
+  Scenario: [10] Fail on negative bound
+    Given an empty graph
+    And having executed:
+      """
+      CREATE (n0:A {name: 'n0'}),
+             (n00:B {name: 'n00'}),
+             (n01:B {name: 'n01'}),
+             (n000:C {name: 'n000'}),
+             (n001:C {name: 'n001'}),
+             (n010:C {name: 'n010'}),
+             (n011:C {name: 'n011'}),
+             (n0000:D {name: 'n0000'}),
+             (n0001:D {name: 'n0001'}),
+             (n0010:D {name: 'n0010'}),
+             (n0011:D {name: 'n0011'}),
+             (n0100:D {name: 'n0100'}),
+             (n0101:D {name: 'n0101'}),
+             (n0110:D {name: 'n0110'}),
+             (n0111:D {name: 'n0111'})
+      CREATE (n0)-[:LIKES]->(n00),
+             (n0)-[:LIKES]->(n01),
+             (n00)-[:LIKES]->(n000),
+             (n00)-[:LIKES]->(n001),
+             (n01)-[:LIKES]->(n010),
+             (n01)-[:LIKES]->(n011),
+             (n000)-[:LIKES]->(n0000),
+             (n000)-[:LIKES]->(n0001),
+             (n001)-[:LIKES]->(n0010),
+             (n001)-[:LIKES]->(n0011),
+             (n010)-[:LIKES]->(n0100),
+             (n010)-[:LIKES]->(n0101),
+             (n011)-[:LIKES]->(n0110),
+             (n011)-[:LIKES]->(n0111)
+      """
+    When executing query:
+      """
+      MATCH (a:A)
+      MATCH (a)-[:LIKES*-2]->(c)
+      RETURN c.name
+      """
+    Then a SyntaxError should be raised at compile time: InvalidRelationshipPattern

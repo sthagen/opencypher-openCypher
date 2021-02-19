@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 "Neo Technology,"
+ * Copyright (c) 2015-2021 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,9 +28,10 @@
 package org.opencypher.tools.tck
 
 import org.opencypher.tools.tck.values._
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class CypherValueParserTest extends FunSuite with Matchers {
+class CypherValueParserTest extends AnyFunSuite with Matchers {
 
   test("unlabelled node") {
     val string = "()"

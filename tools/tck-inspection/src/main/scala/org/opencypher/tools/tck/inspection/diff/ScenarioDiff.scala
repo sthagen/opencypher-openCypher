@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 "Neo Technology,"
+ * Copyright (c) 2015-2021 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,17 +32,18 @@ import org.opencypher.tools.tck.api.Scenario
 import org.opencypher.tools.tck.api.Step
 import org.opencypher.tools.tck.inspection.diff.ScenarioDiffTag._
 
-
 sealed trait ScenarioDiffTag
 
 object ScenarioDiffTag {
   case object SourceUnchanged extends ScenarioDiffTag
   case object Unchanged extends ScenarioDiffTag
   case object Moved extends ScenarioDiffTag
+  case object NumberChanged extends ScenarioDiffTag
   case object Retagged extends ScenarioDiffTag
   case object StepsChanged extends ScenarioDiffTag
   case object SourceChanged extends ScenarioDiffTag
   case object ExampleIndexChanged extends ScenarioDiffTag
+  case object ExampleNameChanged extends ScenarioDiffTag
   case object PotentiallyRenamed extends ScenarioDiffTag
   case object Different extends ScenarioDiffTag
 }
@@ -53,9 +54,13 @@ case class ScenarioDiff(before: Scenario, after: Scenario) extends Diff[Scenario
 
   lazy val featureName: ElementDiff[String] = ElementDiff(before.featureName, after.featureName)
 
+  lazy val number: ElementDiff[Option[Int]] = ElementDiff(before.number, after.number)
+
   lazy val name: ElementDiff[String] = ElementDiff(before.name, after.name)
 
   lazy val exampleIndex: ElementDiff[Option[Int]] = ElementDiff(before.exampleIndex, after.exampleIndex)
+
+  lazy val exampleName: ElementDiff[Option[String]] = ElementDiff(before.exampleName, after.exampleName)
 
   lazy val tags: SetDiff[String] = SetDiff(before.tags, after.tags)
 
@@ -63,10 +68,10 @@ case class ScenarioDiff(before: Scenario, after: Scenario) extends Diff[Scenario
 
   lazy val diffTags: Set[ScenarioDiffTag] = diffTags(before, after)
 
-  lazy val potentialDuplicate: Boolean = diffTags subsetOf Set[ScenarioDiffTag](Moved, Retagged, ExampleIndexChanged, StepsChanged, PotentiallyRenamed)
+  lazy val potentialDuplicate: Boolean = diffTags subsetOf Set[ScenarioDiffTag](Moved, Retagged, ExampleIndexChanged, ExampleNameChanged, StepsChanged, PotentiallyRenamed)
 
   private def diffTags(before: Scenario, after: Scenario): Set[ScenarioDiffTag] = {
-    val diff = Set[ScenarioDiffTag](Unchanged, SourceUnchanged, SourceChanged, Moved, Retagged, StepsChanged, ExampleIndexChanged, PotentiallyRenamed).filter {
+    val diff = Set[ScenarioDiffTag](Unchanged, SourceUnchanged, SourceChanged, Moved, NumberChanged, Retagged, StepsChanged, ExampleIndexChanged, ExampleNameChanged, PotentiallyRenamed).filter {
       case Unchanged => before.equals(after)
       case SourceUnchanged =>
         before.equals(after) &&
@@ -78,6 +83,9 @@ case class ScenarioDiff(before: Scenario, after: Scenario) extends Diff[Scenario
         (categories.changed || featureName.changed) &&
           !name.changed &&
           !exampleIndex.changed
+      case NumberChanged =>
+        !name.changed &&
+          number.changed
       case Retagged =>
         !name.changed &&
           !exampleIndex.changed &&
@@ -89,8 +97,19 @@ case class ScenarioDiff(before: Scenario, after: Scenario) extends Diff[Scenario
       case ExampleIndexChanged =>
         !categories.changed &&
           !featureName.changed &&
+          !number.changed &&
           !name.changed &&
           exampleIndex.changed &&
+          !tags.changed &&
+          !steps.changed &&
+          Pickle(after.source) == Pickle(before.source)
+      case ExampleNameChanged =>
+        !categories.changed &&
+          !featureName.changed &&
+          !number.changed &&
+          !name.changed &&
+          !exampleIndex.changed &&
+          exampleName.changed &&
           !tags.changed &&
           !steps.changed &&
           Pickle(after.source) == Pickle(before.source)

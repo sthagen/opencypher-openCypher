@@ -50,12 +50,12 @@ The details of internal types are out of scope for the purposes of this document
 
 === Types and Type Literal Syntax
 
-The section below presents presents the new Public Type System (PTS) proposed for Cypher.
+The section below presents the new Public Type System (PTS) proposed for Cypher.
 
 ==== Material and nullable types
 
 The type system provides a way to track nullability, i.e. a type may express if a given expression may be `null` or not.
-Tracking (non-)nullability helps an implementation to detect and warn about possible user errors during compile time and  it also enables optimizations that rely on values not being `null`. As an example, an implementation may infer that `MATCH` will never introduce a nullable variable, but `OPTIONAL MATCH` will only introduce nullable variables.
+Tracking (non-)nullability helps an implementation to detect and warn about possible user errors during compile time and it also enables optimizations that rely on values not being `null`. As an example, an implementation may infer that `MATCH` will never introduce a nullable variable, but `OPTIONAL MATCH` will only introduce nullable variables.
 
 Material types are all types that do not permit `null` as a valid result of evaluating the underlying expression.
 In the sections below, generally only the material variants of each type are given.
@@ -128,7 +128,12 @@ a nullable variant:
 ** Lists (ordered sequences with random access) of elements of a given material or nullable type `T`. The syntax for a nullable lists of elements of type `T` is `LIST? OF T`. Note that accessing a list by index always yields a value of type `T?` since indexing out of bounds is defined to return `null`.
 ** `LIST OF T2` is a subtype of `LIST OF T1` if `T2` is a subtype of `T1`. This is a valid subtyping rule since values in Cypher are immutable. Adding an element of type `T` to a `LIST OF S` would produce a new list of type `LIST OF R`, where `R` is the nearest common supertype of `T` and `S`
 * `MAP`
-** Maps from string keys to values of any type, i.e. `{ name: 'Svensson' }`. The type of map values is `ANY?` since it is unknown to the type system if a given map contains a certain key or not. Note also that maps do not distinguish between missing keys and keys that map to a `null` value. `MAP` is a parent to all property containers, like `NODE` and `RELATIONSHIP`.
+** Maps from string keys to values of any type, i.e. `{ name: 'Svensson' }`.
+   The type of map values is `ANY?` since it is unknown to the type system if a given map contains a certain key or not.
+   Note also that maps distinguish between missing keys and keys that map to a `null` value.
+   As an example, that means that `{name: null}` is not equal to `{}`, the empty map.
+   A use case where this distinction is particularly important is when setting multiple properties on a node.
+   `SET n += {name: null, age: 20}` will remove any existing `name` properties while `SET n += {age: 20}` would leave `name` properties untouched.
 
 ==== Graph Types
 
@@ -136,15 +141,13 @@ The following graph types should be supported by any implementation of Cypher, b
 a nullable variant:
 
 * `NODE`
-** A `NODE` is a node in the property graph model with properties, labels, and relationships. A node is an entity and a property container in the model and therefore also a `MAP`.
+** A `NODE` is a node in the property graph model with properties, labels, and relationships.
+   A node is an entity and a property container.
 * `RELATIONSHIP`
-** A `RELATIONSHIP` is a relationship in the property graph model with properties, relationship type, a start node, and an end node. A relationship is an entity and a property container in the model and therefore also a `MAP`.
+** A `RELATIONSHIP` is a relationship in the property graph model with properties, relationship type, a start node, and an end node.
+   A relationship is an entity and a property container.
 * `PATH`
 ** A path from a node `n1` to a node `ni` - corresponding to a walk in the graph from `n1` to `ni` - is a sequence `n1`, `r1`, `n2`, `r2`, ..., `r(i-1)`, `ni` of alternating nodes and relationships such that for `1 \<= j < i`, any `rj` contained in the path is incident with `nj` and `n(j+1)`. Additionally, a single node path is a path that starts and ends at the same node `n0` and does not contain any relationships.
-
-==== Void type
-
-This CIP also introduces an additional nullable type called `VOID`. `VOID` is intended to be used as the return type of user defined procedures that execute without producing a result value, i.e. the return type of procedures with side effects. `VOID` is a subtype of `ANY?`. In an expression context, `null` is the only value that inhibits the `VOID` type, indicating a missing "real" return value (Note though that Cypher currently does not have any expressions of type `VOID` and this is merely defined here for completeness).
 
 === Type Annotation
 
@@ -214,11 +217,8 @@ nullable container type	= "LIST?", "OF", type
                         | "MAP?"
                         ;
 
-void type = "VOID" ;
-
 keywords = type keywords
          | type keywords, "?"
-         | void type
          | "OF"
          | ...
          ;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 "Neo Technology,"
+ * Copyright (c) 2015-2021 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,6 +31,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.opencypher.tools.Option.option;
 
 public class OptionTest
 {
@@ -71,7 +72,7 @@ public class OptionTest
     public void shouldOverride() throws Exception
     {
         // given
-        Options options = Option.options( Options.class, foo -> "bar" );
+        Options options = Option.options( Options.class, option( "foo", foo -> "bar" ) );
 
         // then
         assertEquals( "bar", options.foo() );
@@ -83,7 +84,7 @@ public class OptionTest
         // when
         try
         {
-            Option.options( Options.class, baz -> 11 );
+            Option.options( Options.class, option( "baz", baz -> 11 ) );
 
             fail( "expected exception" );
         }
@@ -115,7 +116,7 @@ public class OptionTest
     public void shouldAllowOperators() throws Exception
     {
         // given
-        Options.WithOperator operator = Option.options( Options.WithOperator.class, prefix -> "Hello " );
+        Options.WithOperator operator = Option.options( Options.WithOperator.class, option( "prefix", prefix -> "Hello " ) );
 
         // when
         String result = operator.anOperator( "World" );

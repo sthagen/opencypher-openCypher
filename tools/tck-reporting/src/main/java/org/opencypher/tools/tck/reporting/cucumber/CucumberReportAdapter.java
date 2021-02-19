@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 "Neo Technology,"
+ * Copyright (c) 2015-2021 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,28 +27,23 @@
  */
 package org.opencypher.tools.tck.reporting.cucumber;
 
-import cucumber.api.PickleStepTestStep;
-import cucumber.api.Result;
-import cucumber.api.TestCase;
-import cucumber.api.TestStep;
-import cucumber.api.event.EventListener;
-import cucumber.api.event.TestCaseStarted;
-import cucumber.api.event.TestRunFinished;
-import cucumber.api.event.TestRunStarted;
-import cucumber.api.event.TestSourceRead;
-import cucumber.api.event.TestStepFinished;
-import cucumber.api.event.TestStepStarted;
-import cucumber.api.event.WriteEvent;
-import cucumber.runner.CanonicalOrderEventPublisher;
-import cucumber.runtime.RuntimeOptions;
-import cucumber.runtime.formatter.PluginFactory;
-import gherkin.pickles.Pickle;
-import gherkin.pickles.PickleLocation;
+import io.cucumber.core.options.CucumberPropertiesParser;
+import io.cucumber.core.options.PluginOption;
+import io.cucumber.core.plugin.JSONFormatter;
+import io.cucumber.plugin.EventListener;
+import io.cucumber.plugin.event.*;
+import io.cucumber.core.options.RuntimeOptions;
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.URI;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -69,13 +64,13 @@ public class CucumberReportAdapter implements BeforeAllCallback, AfterAllCallbac
     private final CanonicalOrderEventPublisher bus = new CanonicalOrderEventPublisher();
     private final SystemOutReader output = new SystemOutReader();
 
-    private final Map<String, String> featureNameToUri = new HashMap<>();
-    private final Map<String, Long> stepTimestamp = new HashMap<>();
+    private final Map<String, URI> featureNameToUri = new HashMap<>();
+    private final Map<String, Instant> stepTimestamp = new HashMap<>();
 
     private TestCase currentTestCase;
 
     @Override
-    public void beforeAll(ExtensionContext context) throws Exception {
+    public void beforeAll(ExtensionContext context) {
         initCucumberPlugins();
 
         TCKEvents.feature().subscribe(adapt(featureReadEvent()));
@@ -83,56 +78,56 @@ public class CucumberReportAdapter implements BeforeAllCallback, AfterAllCallbac
         TCKEvents.stepStarted().subscribe(adapt(stepStartedEvent()));
         TCKEvents.stepFinished().subscribe(adapt(stepFinishedEvent()));
 
-        bus.handle(new TestRunStarted(time()));
+        bus.handle(new TestRunStarted(Instant.now()));
     }
 
     @Override
     public void afterAll(ExtensionContext context) throws Exception {
-        bus.handle(new TestRunFinished(time()));
+        bus.handle(new TestRunFinished(Instant.now()));
         output.close();
     }
 
     private void initCucumberPlugins() {
-        PluginFactory pluginFactory = new PluginFactory();
-        RuntimeOptions options = new RuntimeOptions("");
-        options.getPluginFormatterNames()
-            .stream()
-            .map(pluginFactory::create)
-            .filter(EventListener.class::isInstance)
-            .map(EventListener.class::cast)
-            .forEach(json -> json.setEventPublisher(bus));
+        Map<String, String> properties = System.getProperties().entrySet().stream()
+                .collect(Collectors.toMap(e -> (String) e.getKey(), e -> (String) e.getValue()));
+        RuntimeOptions options = new CucumberPropertiesParser().parse(properties).build();
+        Appendable appendable = options.plugins().stream()
+            .filter(PluginOption.class::isInstance)
+            .map(PluginOption.class::cast)
+            .filter(pluginOption -> pluginOption.pluginClass() == JSONFormatter.class)
+            .findFirst()
+            .map(pluginOption -> {
+                try {
+                    return (Appendable) new FileWriter(pluginOption.argument());
+                } catch (IOException e) {
+                    throw new IllegalStateException("File " + pluginOption.argument() + " not found");
+                }
+            }).orElse(System.out);
+        EventListener eventListener = new JSONFormatter(appendable);
+        eventListener.setEventPublisher(bus);
     }
 
     private Consumer<TCKEvents.FeatureRead> featureReadEvent() {
         return feature -> {
             featureNameToUri.put(feature.name(), feature.uri());
-            bus.handle(new TestSourceRead(time(), feature.uri(), feature.source()));
+            bus.handle(new TestSourceRead(Instant.now(), feature.uri(), feature.source()));
         };
     }
 
     private Consumer<Scenario> scenarioStartedEvent() {
         return scenario -> {
-            Long startedAt = time();
-            String featureUri = checkNull(featureNameToUri.get(scenario.featureName()));
-            Pickle pickle = scenario.source();
-            List<TestStep> steps = pickle.getSteps()
-                .stream()
-                .map(step -> new TCKTestStep(step, featureUri, outlineLocation(step.getLocations())))
-                .collect(Collectors.toList());
-            int line = outlineLocation(pickle.getLocations());
-            currentTestCase = new TCKTestCase(pickle, steps, featureUri, line);
-            bus.handle(new TestCaseStarted(startedAt, currentTestCase));
+            currentTestCase = new TCKTestCase(scenario.source());
+            bus.handle(new TestCaseStarted(Instant.now(), currentTestCase));
         };
     }
 
     private Consumer<TCKEvents.StepStarted> stepStartedEvent() {
         return event -> {
-            Long startedAt = time();
+            Instant startedAt = Instant.now();
             stepTimestamp.put(event.correlationId(), startedAt);
             Step step = event.step();
             if (shouldReport(step)) {
-                int line = outlineLocation(step.source().getLocations());
-                TCKTestStep testStep = new TCKTestStep(step.source(), checkNull(currentTestCase).getUri(), line);
+                TCKTestStep testStep = new TCKTestStep(step.source(), checkNull(currentTestCase).getUri());
                 TestStepStarted cucumberEvent = new TestStepStarted(startedAt, checkNull(currentTestCase), testStep);
                 bus.handle(cucumberEvent);
             }
@@ -141,15 +136,14 @@ public class CucumberReportAdapter implements BeforeAllCallback, AfterAllCallbac
 
     private Consumer<TCKEvents.StepFinished> stepFinishedEvent() {
         return event -> {
-            Long finishedAt = time();
+            Instant finishedAt = Instant.now();
             Step step = event.step();
             if (shouldReport(step)) {
                 logOutput(step, finishedAt);
-                Long startedAt = checkNull(stepTimestamp.get(event.correlationId()));
-                Long duration = finishedAt - startedAt;
-                Result.Type status = getStatus(event.result());
-                int line = outlineLocation(step.source().getLocations());
-                PickleStepTestStep testStep = new TCKTestStep(step.source(), checkNull(currentTestCase).getUri(), line);
+                Instant startedAt = checkNull(stepTimestamp.get(event.correlationId()));
+                Duration duration = Duration.between(startedAt, finishedAt);
+                Status status = getStatus(event.result());
+                PickleStepTestStep testStep = new TCKTestStep(step.source(), checkNull(currentTestCase).getUri());
                 Result result = new Result(status, duration, errorOrNull(event.result()));
                 TestStepFinished cucumberEvent = new TestStepFinished(finishedAt, checkNull(currentTestCase), testStep, result);
                 bus.handle(cucumberEvent);
@@ -159,7 +153,7 @@ public class CucumberReportAdapter implements BeforeAllCallback, AfterAllCallbac
         };
     }
 
-    private void logOutput(Step step, Long timeNow) {
+    private void logOutput(Step step, Instant timeNow) {
         String log = output.clear();
 
         if (step instanceof SideEffects) {
@@ -186,20 +180,12 @@ public class CucumberReportAdapter implements BeforeAllCallback, AfterAllCallbac
         };
     }
 
-    private Result.Type getStatus(Either<Throwable, Either<ExecutionFailed, CypherValueRecords>> result) {
-        return result.isRight() ? Result.Type.PASSED : Result.Type.FAILED;
+    private Status getStatus(Either<Throwable, Either<ExecutionFailed, CypherValueRecords>> result) {
+        return result.isRight() ? Status.PASSED : Status.FAILED;
     }
 
     private Throwable errorOrNull(Either<Throwable, Either<ExecutionFailed, CypherValueRecords>> result) {
         return result.isLeft() ? result.left().get() : null;
-    }
-
-    private Long time() {
-        return System.currentTimeMillis();
-    }
-
-    private int outlineLocation(List<PickleLocation> locations) {
-        return locations.get(locations.size() - 1).getLine();
     }
 
     private  <T> T checkNull(T value) {

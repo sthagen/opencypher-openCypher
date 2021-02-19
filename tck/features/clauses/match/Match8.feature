@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2020 "Neo Technology,"
+# Copyright (c) 2015-2021 "Neo Technology,"
 # Network Engine for Objects in Lund AB [http://neotechnology.com]
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,9 +28,30 @@
 
 #encoding: utf-8
 
-Feature: Match8 - Match clause Interoperation with other clauses
+Feature: Match8 - Match clause interoperation with other clauses
 
-  Scenario: [1] Counting rows after MATCH, MERGE, OPTIONAL MATCH
+  Scenario: [1] Pattern independented of bound variables results in cross product
+    Given an empty graph
+    And having executed:
+      """
+      CREATE (:A), (:B)
+      """
+    When executing query:
+      """
+      MATCH (a)
+      WITH a
+      MATCH (b)
+      RETURN a, b
+      """
+    Then the result should be, in any order:
+      | a    | b    |
+      | (:A) | (:A) |
+      | (:A) | (:B) |
+      | (:B) | (:A) |
+      | (:B) | (:B) |
+    And no side effects
+
+  Scenario: [2] Counting rows after MATCH, MERGE, OPTIONAL MATCH
     Given an empty graph
     And having executed:
       """
@@ -49,4 +70,35 @@ Feature: Match8 - Match clause Interoperation with other clauses
     Then the result should be, in any order:
       | count(*) |
       | 6        |
+    And no side effects
+
+  Scenario: [3] Matching and disregarding output, then matching again
+    Given an empty graph
+    And having executed:
+      """
+      CREATE (andres {name: 'Andres'}),
+             (michael {name: 'Michael'}),
+             (peter {name: 'Peter'}),
+             (bread {type: 'Bread'}),
+             (veggies {type: 'Veggies'}),
+             (meat {type: 'Meat'})
+      CREATE (andres)-[:ATE {times: 10}]->(bread),
+             (andres)-[:ATE {times: 8}]->(veggies),
+             (michael)-[:ATE {times: 4}]->(veggies),
+             (michael)-[:ATE {times: 6}]->(bread),
+             (michael)-[:ATE {times: 9}]->(meat),
+             (peter)-[:ATE {times: 7}]->(veggies),
+             (peter)-[:ATE {times: 7}]->(bread),
+             (peter)-[:ATE {times: 4}]->(meat)
+      """
+    When executing query:
+      """
+      MATCH ()-->()
+      WITH 1 AS x
+      MATCH ()-[r1]->()<--()
+      RETURN sum(r1.times)
+      """
+    Then the result should be, in any order:
+      | sum(r1.times) |
+      | 776           |
     And no side effects
