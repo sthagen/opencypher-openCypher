@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -105,10 +105,21 @@ abstract class Node extends Grammar.Term implements LocationAware
         return this;
     }
 
+    boolean isEpsilon()
+    {
+        return false;
+    }
+
     static Node epsilon()
     {
         return new Node()
         {
+            @Override
+            boolean isEpsilon()
+            {
+                return true;
+            }
+
             @Override
             public int hashCode()
             {

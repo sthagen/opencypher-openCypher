@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,7 +34,6 @@ import static org.opencypher.tools.Reflection.pathOf;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.io.PrintStream;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -43,6 +42,8 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -80,24 +81,35 @@ interface Main extends Serializable
         }
         else
         {
+            String formatter = args[0];
             Method main;
             try
             {
-                Class<?> cls = Class.forName( Main.class.getPackage().getName() + '.' + args[0] );
-                main = cls.getDeclaredMethod( "main", String[].class );
-                if ( !Modifier.isStatic( main.getModifiers() ) || "Main".equals( args[0] ) )
+                Class<?> cls;
+                if ( (formatter.contains( "." ) || formatter.contains( "/" )) && Files.isRegularFile( Paths.get( formatter ) ) )
                 {
-                    throw new IllegalArgumentException( args[0] );
+                    cls = Project.class;
+                    formatter = cls.getSimpleName();
+                }
+                else
+                {
+                    cls = Class.forName( Main.class.getPackage().getName() + '.' + formatter );
+                    args = Arrays.copyOfRange( args, 1, args.length );
+                }
+                main = cls.getDeclaredMethod( "main", String[].class );
+                if ( !Modifier.isStatic( main.getModifiers() ) || "Main".equals( formatter ) )
+                {
+                    throw new IllegalArgumentException( formatter );
                 }
             }
             catch ( Exception e )
             {
-                System.err.println( "Unknown formatter: " + args[0] );
+                System.err.println( "Unknown formatter: " + formatter );
                 throw e;
             }
             try
             {
-                main.invoke( null, (Object) Arrays.copyOfRange( args, 1, args.length ) );
+                main.invoke( null, (Object) args );
             }
             catch ( InvocationTargetException e )
             {
@@ -106,7 +118,7 @@ interface Main extends Serializable
         }
     }
 
-    void write( Grammar grammar, OutputStream out ) throws Exception;
+    void write( Grammar grammar, Path workingDir, OutputStream out ) throws Exception;
 
     /**
      * Utility method for executing a program that operates on a grammar and produces output.
@@ -119,25 +131,37 @@ interface Main extends Serializable
         if ( args.length == 1 )
         {
             Grammar.ParserOption[] options = Grammar.ParserOption.from( System.getProperties() );
-            Grammar grammar = null;
+            Path grammarPath = null;
             String path = args[0];
-            if ( path.indexOf( '/' ) == -1 )
+            FileSystem fs = null;
+            try
             {
-                URL resource = program.getClass().getResource( "/" + path );
-                if ( resource != null )
+                if ( path.indexOf( '/' ) == -1 )
                 {
-                    URI uri = resource.toURI();
-                    try ( FileSystem ignored = "jar".equalsIgnoreCase( uri.getScheme() ) ? FileSystems.newFileSystem( uri, Collections.emptyMap() ) : null )
+                    URL resource = program.getClass().getResource( "/" + path );
+                    if ( resource != null )
                     {
-                        grammar = Grammar.parseXML( Paths.get( uri ), options );
+                        URI uri = resource.toURI();
+                        if ( "jar".equalsIgnoreCase( uri.getScheme() ) )
+                        {
+                            fs = FileSystems.newFileSystem( uri, Collections.emptyMap() );
+                        }
+                        grammarPath = Paths.get( uri );
                     }
                 }
+                if ( grammarPath == null )
+                {
+                    grammarPath = Paths.get( path );
+                }
+                program.write( Grammar.parseXML( grammarPath, options ), grammarPath.getParent(), out );
             }
-            if ( grammar == null )
+            finally
             {
-                grammar = Grammar.parseXML( Paths.get( path ), options );
+                if (fs != null)
+                {
+                    fs.close();
+                }
             }
-            program.write( grammar, out );
         }
         else
         {

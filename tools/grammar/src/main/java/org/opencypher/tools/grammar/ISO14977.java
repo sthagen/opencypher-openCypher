@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,7 @@ package org.opencypher.tools.grammar;
 
 import java.io.OutputStream;
 import java.io.Writer;
+import java.nio.file.Path;
 
 import org.opencypher.grammar.CharacterSet;
 import org.opencypher.grammar.Grammar;
@@ -51,7 +52,7 @@ public class ISO14977 extends BnfWriter
         write( grammar, output( writer ) );
     }
 
-    public static void write( Grammar grammar, OutputStream stream )
+    public static void write( Grammar grammar, Path workingDir, OutputStream stream )
     {
         write( grammar, output( stream ) );
     }
@@ -81,6 +82,18 @@ public class ISO14977 extends BnfWriter
         term.accept( new ISO14977( output ) );
     }
 
+    public static void append( Production production, Output output )
+    {
+        new ISO14977( output )
+        {
+            @Override
+            protected void productionEnd()
+            {
+                output.println( " ;" );
+            }
+        }.visitProduction( production );
+    }
+
     public static Output string( Output str, Production production )
     {
         return str.append( production.definition(), ISO14977::append );
@@ -95,18 +108,6 @@ public class ISO14977 extends BnfWriter
         }
     }
 
-    public interface HtmlLinker
-    {
-        String referenceLink( NonTerminal reference );
-
-        default String charsetLink( CharacterSet charset )
-        {
-            return charsetLink( CharacterSet.Unicode.toSetString( charset ) );
-        }
-
-        String charsetLink( String charset );
-    }
-
     private ISO14977( Output output )
     {
         super( output );
@@ -119,7 +120,7 @@ public class ISO14977 extends BnfWriter
 
         Html( HtmlTag html, HtmlLinker linker )
         {
-            super( html.output() );
+            super( html.textOutput() );
             this.html = html;
             this.linker = linker;
         }

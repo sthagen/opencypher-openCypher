@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -66,6 +66,17 @@ public final class XmlParser<Root>
     public static <T> XmlParser<T> xmlParser( Class<T> root )
     {
         return new XmlParser<>( root, NodeBuilder.tree( root ) );
+    }
+
+    @SafeVarargs
+    public static <T> XmlParser<T> combine( Class<T> base, XmlParser<? extends T>... parsers )
+    {
+        NodeBuilder[] rootBuilders = new NodeBuilder[parsers.length];
+        for ( int i = 0; i < parsers.length; i++ )
+        {
+            rootBuilders[i] = parsers[i].builder;
+        }
+        return new XmlParser<>( base, NodeBuilder.choice( rootBuilders ) );
     }
 
     /**
@@ -154,7 +165,7 @@ public final class XmlParser<Root>
             throws ParserConfigurationException, SAXException, IOException
     {
         ParserStateMachine stateMachine = new ParserStateMachine( resolver, builder, options );
-        SAXParser parser = saxParser();
+        SAXParser parser = saxParser( true );
         parser.setProperty( LEXICAL_HANDLER, stateMachine ); // handle XML comments as well
         parser.parse( input, stateMachine );
         return root.cast( stateMachine.produceRoot() );
@@ -177,10 +188,15 @@ public final class XmlParser<Root>
         return String.format( "XmlParser{%s as %s}", builder, root );
     }
 
-    static SAXParser saxParser() throws ParserConfigurationException, SAXException
+    static SAXParser saxParser( boolean validateDTD ) throws ParserConfigurationException, SAXException
     {
         SAXParserFactory sax = SAXParserFactory.newInstance();
         sax.setNamespaceAware( true );
+        if ( !validateDTD )
+        {
+            sax.setValidating( false );
+            sax.setFeature( "http://apache.org/xml/features/nonvalidating/load-external-dtd", false );
+        }
         return sax.newSAXParser();
     }
 }

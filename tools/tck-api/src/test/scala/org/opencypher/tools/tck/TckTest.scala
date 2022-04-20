@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,16 +34,18 @@ import org.opencypher.tools.tck.constants.TCKErrorTypes.SYNTAX_ERROR
 import org.opencypher.tools.tck.values.CypherValue
 import org.scalatest.Assertions
 import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class TckTest extends AnyFunSpec with Assertions {
+import scala.collection.compat.immutable._
+
+class TckTest extends AnyFunSpec with Assertions with Matchers {
+
+  private val scenarios = CypherTCK.parseFeatures(getClass.getResource("Foo.feature").toURI) match {
+    case feature :: Nil => feature.scenarios
+    case _              => List[Scenario]()
+  }
 
   describe("Out of the scenarios in Foo.feature") {
-    val fooUri = getClass.getResource("Foo.feature").toURI
-    val scenarios = CypherTCK.parseFeatures(fooUri) match {
-      case feature :: Nil => feature.scenarios
-      case _ => List[Scenario]()
-    }
-
     scenarios.foreach { scenario =>
       it(s"${scenario.toString()} should run successfully") {
         scenario(FakeGraph).run()
@@ -52,7 +54,32 @@ class TckTest extends AnyFunSpec with Assertions {
     }
   }
 
-  private object FakeGraph extends Graph with ProcedureSupport {
+  describe("Error handling") {
+    it("should retain original exception from side effect queries") {
+      val myException = MyException("original")
+
+      val graph = FailingGraph(FakeGraph) {
+        case SideEffectQuery => myException
+      }
+
+      val e = the[Throwable].thrownBy(scenarios.head(graph).run())
+      causes(e) should contain(myException)
+    }
+  }
+
+  def causes(throwable: Throwable): LazyList[Throwable] = {
+    val self = LazyList(throwable)
+    Option(throwable.getCause) match {
+      case None              => self
+      case Some(`throwable`) => self
+      case Some(cause)       => self.lazyAppendedAll(causes(cause))
+    }
+  }
+
+  private object FakeGraph extends Graph with ProcedureSupport with CsvFileCreationSupport {
+
+    var cvsData = CypherValueRecords.empty
+
     override def cypher(query: String, params: Map[String, CypherValue], queryType: QueryType): Result = {
       queryType match {
         case InitQuery =>
@@ -63,6 +90,9 @@ class TckTest extends AnyFunSpec with Assertions {
           CypherValueRecords.empty
         case ExecQuery if query.contains("foo()") =>
           ExecutionFailed(SYNTAX_ERROR, COMPILE_TIME, UNKNOWN_FUNCTION)
+        // assert that csv path parameter is not overwritten by additional parameters
+        case ExecQuery if query.contains("LOAD CSV") && params.keySet.equals(Set("param", "list")) =>
+          StringRecords(List("res"), cvsData.rows.map(r => Map("res" -> r("txt").toString)))
         case ExecQuery =>
           StringRecords(List("1"), List(Map("1" -> "1")))
       }
@@ -70,5 +100,24 @@ class TckTest extends AnyFunSpec with Assertions {
 
     override def registerProcedure(signature: String, values: CypherValueRecords): Unit =
       ()
+
+    override def createCSVFile(contents: CypherValueRecords): String = {
+      cvsData = contents
+      "dummy/path.csv"
+    }
   }
+
+  private case class FailingGraph(base: Graph)(failureFor: PartialFunction[QueryType, Throwable]) extends Graph with ProcedureSupport {
+    override def cypher(query: String, params: Map[String, CypherValue], queryType: QueryType): Result = {
+      failureFor.lift.apply(queryType) match {
+        case Some(e) => ExecutionFailed("dummyType", "dummyPhase", "dummyDetail", Some(e))
+        case None    => base.cypher(query, params, queryType)
+      }
+    }
+
+    override def registerProcedure(signature: String, values: CypherValueRecords): Unit =
+      ()
+  }
+
+  private case class MyException(msg: String) extends Exception(msg)
 }

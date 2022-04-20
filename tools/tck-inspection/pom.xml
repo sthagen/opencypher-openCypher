@@ -10,7 +10,7 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>tck-inspection_2.12</artifactId>
+    <artifactId>tck-inspection_${scala.binary.version}</artifactId>
     <name>openCypher TCK Inspection</name>
     <url>http://opencypher.org</url>
     <description>Tools for inspecting openCypher TCK scenarios</description>
@@ -27,7 +27,27 @@
     </licenses>
 
     <build>
+        <sourceDirectory>src/main/scala</sourceDirectory>
         <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>src/main/scala_${scala.binary.version}</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
@@ -41,6 +61,10 @@
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.spurint.maven.plugins</groupId>
+                <artifactId>scala-cross-maven-plugin</artifactId>
+            </plugin>
         </plugins>
     </build>
 
@@ -52,20 +76,33 @@
         </dependency>
 
         <dependency>
+            <groupId>org.scala-lang.modules</groupId>
+            <artifactId>scala-collection-compat_${scala.binary.version}</artifactId>
+            <version>${dep.scala.compat.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>io.cucumber</groupId>
             <artifactId>cucumber-core</artifactId>
         </dependency>
 
         <dependency>
+            <!-- For intellij to get runtime dependencies right -->
             <groupId>com.lihaoyi</groupId>
-            <artifactId>cask_2.12</artifactId>
-            <version>0.2.9</version>
+            <artifactId>fastparse_${scala.binary.version}</artifactId>
+            <version>${dep.fastparse.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.lihaoyi</groupId>
-            <artifactId>scalatags_2.12</artifactId>
-            <version>0.7.0</version>
+            <artifactId>cask_${scala.binary.version}</artifactId>
+            <version>${dep.cask.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.lihaoyi</groupId>
+            <artifactId>scalatags_${scala.binary.version}</artifactId>
+            <version>${dep.scalatags.version}</version>
         </dependency>
 
         <!-- Test deps -->
@@ -79,6 +116,13 @@
         <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_${scala.binary.version}</artifactId>
+            <version>${dep.scalatest.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>scala-library</artifactId>
+                </exclusion>
+            </exclusions>
             <scope>test</scope>
         </dependency>
 
@@ -89,5 +133,20 @@
         </dependency>
 
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>scala-212</id>
+            <properties>
+                <dep.cask.version>0.2.9</dep.cask.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>scala-213</id>
+            <properties>
+                <dep.cask.version>0.7.12</dep.cask.version>
+            </properties>
+        </profile>
+    </profiles>
 
 </project>

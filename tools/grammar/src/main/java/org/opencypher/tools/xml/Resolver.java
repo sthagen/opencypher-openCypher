@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -98,6 +98,7 @@ abstract class Resolver
     static void initialize( Initializer init )
     {
         init.add( Resolver::file );
+        init.add( Resolver::path );
     }
 
     interface Initializer

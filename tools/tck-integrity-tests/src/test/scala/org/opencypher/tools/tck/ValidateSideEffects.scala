@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,7 +35,7 @@ import org.scalatest.Assertion
 import org.scalatest.enablers.Emptiness.emptinessOfGenTraversable
 import org.scalatest.matchers.should.Matchers
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 trait ValidateSideEffects extends AppendedClues with Matchers with DescribeStepHelper {
 
@@ -50,9 +50,8 @@ trait ValidateSideEffects extends AppendedClues with Matchers with DescribeStepH
     if (step.source.getArgument != null) {
       withClue(s"the expectation of ${step.description} has only numbers greater than zero in step parameter (or no parameter)") {
         // note that this tests that principally valid zero side effects are not listed in the scenario's gherkin code
-        val dataTable = step.source.getArgument.asInstanceOf[DataTableArgument].cells().asScala.map(_.asScala.toList).toList
-        val map = dataTable.map { r => r.head -> r.tail.head.toInt }.toMap
-        all(map.values) should be > 0
+        val numbers = step.source.getArgument.asInstanceOf[DataTableArgument].cells().asScala.map(_.get(1).toInt).toList
+        all(numbers) should be > 0
       }
     }
 

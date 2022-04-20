@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,8 @@ package org.opencypher.tools.tck.inspection.diff
 import org.opencypher.tools.tck.inspection.diff.ElementaryDiffTag.Changed
 import org.opencypher.tools.tck.inspection.diff.ElementaryDiffTag.Different
 import org.opencypher.tools.tck.inspection.diff.ElementaryDiffTag.Unchanged
+
+import scala.language.implicitConversions
 
 sealed trait ElementaryDiffTag
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,6 @@ import org.opencypher.tools.tck.constants.TCKQueries._
 import org.opencypher.tools.tck.constants.TCKSideEffects._
 import org.opencypher.tools.tck.values.CypherValue
 
-import scala.compat.Platform
 
 object SideEffectOps {
 
@@ -40,11 +39,11 @@ object SideEffectOps {
     override def toString: String = {
       val nonZeroSideEffects = ALL intersect v.keySet
       nonZeroSideEffects.toSeq
-        .sortBy(_.charAt(1))
+        .sortBy(str => (str.charAt(1), str.charAt(0)))
         .map { key =>
           s"${fill(key)}${v(key)}"
         }
-        .mkString(Platform.EOL)
+        .mkString(System.lineSeparator())
     }
 
     private def fill(s: String) = (s + ":                 ").take(16)
@@ -128,4 +127,6 @@ object SideEffectOps {
     }
 }
 
-case class MeasurementFailed(failed: ExecutionFailed) extends Throwable
+case class MeasurementFailed(failed: ExecutionFailed) extends Throwable {
+  failed.exception.foreach(initCause)
+}

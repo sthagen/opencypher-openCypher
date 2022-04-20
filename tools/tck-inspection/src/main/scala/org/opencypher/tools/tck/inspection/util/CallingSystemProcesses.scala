@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,7 +47,7 @@ object CallingSystemProcesses {
 
     val exitCode = cmd.!(logger)
 
-    ProcessReturn(exitCode, out, err, cmdSeq.mkString(" "))
+    ProcessReturn(exitCode, out.toSeq, err.toSeq, cmdSeq.mkString(" "))
   }
 
   def checkoutRepoCommit(repositoryUrl: String, commit: String, localDirectory: String): ProcessReturn = {
@@ -77,7 +77,7 @@ object CallingSystemProcesses {
 
     val exitCode = cmd.!(logger)
 
-    ProcessReturn(exitCode, out, err,
+    ProcessReturn(exitCode, out.toSeq, err.toSeq,
       gitCloneCmdSeq.mkString(" ") + "&&" +
         gitFetchCmdSeq.mkString(" ") + "&&" +
         gitCheckoutCmdSeq.mkString(" "))

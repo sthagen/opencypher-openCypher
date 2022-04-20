@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -72,7 +72,7 @@ public class Xml extends XmlGenerator implements ProductionVisitor<SAXException>
 
     public static void main( String... args ) throws Exception
     {
-        Main.execute( Xml::write, args );
+        Main.execute( ( grammar1, workingDir, stream ) -> write( grammar1, stream ), args );
     }
 
     private final Grammar grammar;

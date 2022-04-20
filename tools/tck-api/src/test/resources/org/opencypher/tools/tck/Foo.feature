@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2021 "Neo Technology,"
+# Copyright (c) 2015-2022 "Neo Technology,"
 # Network Engine for Objects in Lund AB [http://neotechnology.com]
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +39,26 @@ Feature: Foo
       | 1 |
     And no side effects
 
+  Scenario: Reading a CSV
+    Given an empty graph
+    And there exists a CSV file with URL as $param, with rows:
+      | i | txt |
+      | 1 | 'a' |
+      | 2 | 'b' |
+    And parameters are:
+      | list | [] |
+
+    When executing query:
+      """
+      LOAD CSV WITH HEADERS from '$param' AS row
+      RETURN row.txt AS res
+      """
+    Then the result should be, in any order:
+      | res   |
+      | 'a'   |
+      | 'b'   |
+    And no side effects
+
   Scenario: Fail
     Given an empty graph
     When executing query:
@@ -46,6 +66,38 @@ Feature: Foo
       RETURN foo()
       """
     Then a SyntaxError should be raised at compile time: UnknownFunction
+
+  Scenario: Fail with any type
+    Given an empty graph
+    When executing query:
+      """
+      RETURN foo()
+      """
+    Then an Error should be raised at compile time: UnknownFunction
+
+  Scenario: Fail at any time
+    Given an empty graph
+    When executing query:
+      """
+      RETURN foo()
+      """
+    Then a SyntaxError should be raised at any time: UnknownFunction
+
+  Scenario: Fail with any detail
+    Given an empty graph
+    When executing query:
+      """
+      RETURN foo()
+      """
+    Then a SyntaxError should be raised at compile time: *
+
+  Scenario: Fail with any type and any detail at any type
+    Given an empty graph
+    When executing query:
+      """
+      RETURN foo()
+      """
+    Then an Error should be raised at any time: *
 
   @ignore
   Scenario: Ignored

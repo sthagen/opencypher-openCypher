@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,11 +32,9 @@ import static org.opencypher.tools.io.Output.output;
 
 import java.io.OutputStream;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -75,6 +73,11 @@ public class SQLBNF extends BnfWriter
         write( grammar, output( stream ) );
     }
 
+    public static void write( Grammar grammar, Path path, OutputStream stream )
+    {
+        write( grammar, stream );
+    }
+
     public static void write( Grammar grammar, Output output )
     {
         String header = grammar.header();
@@ -94,10 +97,9 @@ public class SQLBNF extends BnfWriter
         }
     }
 
-    
     public static void main( String... args ) throws Exception
     {
-        Main.execute( SQLBNF::write, args );
+        Main.execute( ( grammar, workingDir, stream ) -> write( grammar, stream ), args );
     }
 
     public static void append( Grammar.Term term, Output output )
@@ -117,18 +119,6 @@ public class SQLBNF extends BnfWriter
         {
             new SQLBNF.Html( code, linker ).visitProduction( production );
         }
-    }
-
-    public interface HtmlLinker
-    {
-        String referenceLink( NonTerminal reference );
-
-        default String charsetLink( CharacterSet charset )
-        {
-            return charsetLink( CharacterSet.Unicode.toSetString( charset ) );
-        }
-
-        String charsetLink( String charset );
     }
 
     /*
@@ -164,7 +154,7 @@ public class SQLBNF extends BnfWriter
 
         Html( HtmlTag html, HtmlLinker linker )
         {
-            super( html.output() );
+            super( html.textOutput() );
             this.html = html;
             this.linker = linker;
         }

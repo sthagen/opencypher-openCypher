@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,8 +27,6 @@
  */
 package org.opencypher.tools.tck.api
 
-import java.nio.file.Path
-
 import org.opencypher.tools.tck.SideEffectOps
 import org.opencypher.tools.tck.SideEffectOps._
 import org.opencypher.tools.tck.api.Graph.Result
@@ -37,9 +35,13 @@ import org.opencypher.tools.tck.api.events.TCKEvents.StepFinished
 import org.opencypher.tools.tck.api.events.TCKEvents.StepStarted
 import org.opencypher.tools.tck.api.events.TCKEvents.setStepFinished
 import org.opencypher.tools.tck.api.events.TCKEvents.setStepStarted
+import org.opencypher.tools.tck.constants.TCKErrorDetails
+import org.opencypher.tools.tck.constants.TCKErrorPhases
+import org.opencypher.tools.tck.constants.TCKErrorTypes
+import org.opencypher.tools.tck.values.CypherString
 import org.opencypher.tools.tck.values.CypherValue
 
-import scala.compat.Platform.EOL
+import java.nio.file.Path
 import scala.language.implicitConversions
 import scala.util.Failure
 import scala.util.Success
@@ -102,6 +104,16 @@ case class Scenario(categories: List[String], featureName: String, number: Optio
             }
             Right(ctx)
 
+          case (ctx, CsvFile(urlParameter, table, _)) =>
+            ctx.graph match {
+              case csvFileCreationSupport: CsvFileCreationSupport =>
+                val fileUrl = csvFileCreationSupport.createCSVFile(table)
+                Right(ctx.addParameters(Map(urlParameter -> CypherString(fileUrl))))
+              case _ =>
+                Right(ctx)
+            }
+
+
           case (ctx, ExpectResult(expected, _, sorted)) =>
             ctx.lastResult match {
               case Right(records) =>
@@ -113,7 +125,7 @@ case class Scenario(categories: List[String], featureName: String, number: Optio
 
                 if (!correctResult) {
                   val detail = if (sorted) "ordered rows" else "in any order of rows"
-                  Left(ScenarioFailedException(s"${EOL}Expected ($detail):$EOL$expected${EOL}Actual:$EOL$records"))
+                  Left(ScenarioFailedException(s"${java.lang.System.lineSeparator()}Expected ($detail):${java.lang.System.lineSeparator()}$expected${java.lang.System.lineSeparator()}Actual:${java.lang.System.lineSeparator()}$records"))
                 } else {
                   Right(ctx)
                 }
@@ -124,17 +136,17 @@ case class Scenario(categories: List[String], featureName: String, number: Optio
           case (ctx, e @ ExpectError(errorType, phase, detail, _)) =>
             ctx.lastResult match {
               case Left(error) =>
-                if (error.errorType != errorType)
+                if (error.errorType != errorType && error.errorType != TCKErrorTypes.ERROR && errorType != TCKErrorTypes.ERROR)
                   Left(
                     ScenarioFailedException(
                       s"Wrong error type: expected $errorType, got ${error.errorType}",
                       error.exception.orNull))
-                if (error.phase != phase)
+                if (error.phase != phase && error.phase != TCKErrorPhases.ANY_TIME && phase != TCKErrorPhases.ANY_TIME)
                   Left(
                     ScenarioFailedException(
                       s"Wrong error phase: expected $phase, got ${error.phase}",
                       error.exception.orNull))
-                if (error.detail != detail)
+                if (error.detail != detail && error.detail != TCKErrorDetails.ANY && detail != TCKErrorDetails.ANY)
                   Left(
                     ScenarioFailedException(
                       s"Wrong error detail: expected $detail, got ${error.detail}",
@@ -154,11 +166,11 @@ case class Scenario(categories: List[String], featureName: String, number: Optio
             if (diff != expected)
               Left(
                 ScenarioFailedException(
-                  s"${EOL}Expected side effects:$EOL$expected${EOL}Actual side effects:$EOL$diff"))
+                  s"${java.lang.System.lineSeparator()}Expected side effects:${java.lang.System.lineSeparator()}$expected${java.lang.System.lineSeparator()}Actual side effects:${java.lang.System.lineSeparator()}$diff"))
             else Right(ctx)
 
           case (ctx, Parameters(ps, _)) =>
-            Right(ctx.copy(parameters = ps))
+            Right(ctx.addParameters(ps))
 
           case (ctx, _: Dummy) => Right(ctx)
           case (_, s) =>
@@ -202,6 +214,10 @@ case class Scenario(categories: List[String], featureName: String, number: Optio
           val msg = s"Side effect measurement failed with $error"
           throw ScenarioFailedException(msg, error)
       }
+    }
+
+    def addParameters(additionalParameters: Map[String, CypherValue]): ScenarioExecutionContext = {
+      this.copy(parameters = this.parameters ++ additionalParameters)
     }
   }
 

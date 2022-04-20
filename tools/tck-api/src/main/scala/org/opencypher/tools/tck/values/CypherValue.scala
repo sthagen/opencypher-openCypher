@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,8 +26,6 @@
  * Cypher that are not yet approved by the openCypher community".
  */
 package org.opencypher.tools.tck.values
-
-import scala.util.hashing.MurmurHash3
 
 object CypherValue {
   def apply(s: String, orderedLists: Boolean = true): CypherValue = {
@@ -114,11 +112,13 @@ case class CypherOrderedList(elements: List[CypherValue] = List.empty) extends C
   override def equals(obj: scala.Any): Boolean = obj match {
     case null => false
     case other: CypherOrderedList => elements == other.elements
-    case o: CypherUnorderedList => o == this
+    case o: CypherUnorderedList =>
+      // Delegate to CypherUnorderedList.equals which will sort the lists before comparing
+      o == this
     case _ => false
   }
 
-  override def hashCode(): Int = MurmurHash3.productHash(this)
+  override def hashCode(): Int = Hashing.productHash(this)
 }
 
 /**
@@ -138,7 +138,7 @@ private[tck] case class CypherUnorderedList(elements: List[CypherValue] = List.e
     case _ => false
   }
 
-  override def hashCode(): Int = MurmurHash3.productHash(this)
+  override def hashCode(): Int = Hashing.productHash(this)
 }
 
 case object CypherNull extends CypherValue {

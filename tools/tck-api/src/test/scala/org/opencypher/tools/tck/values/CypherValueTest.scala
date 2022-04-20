@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -88,6 +88,14 @@ class CypherValueTest extends AnyFunSuite with Matchers {
     oList1 should equal(uList2)
     oList2 should equal(uList2)
     uList1 should equal(uList2)
+  }
+
+  test("lists that are equal should have the same hashCode") {
+    val oList = CypherOrderedList(List(CypherString("Foo")))
+    val uList = CypherUnorderedList(List(CypherString("Foo")))
+
+    oList should equal(uList)
+    oList.hashCode() should equal(uList.hashCode())
   }
 
   test("list comparisons simple example") {

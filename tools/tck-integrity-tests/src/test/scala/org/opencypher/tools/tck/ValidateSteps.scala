@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,14 +29,17 @@ package org.opencypher.tools.tck
 
 import io.cucumber.core.gherkin.StepType
 import org.opencypher.tools.tck.api.ControlQuery
+import org.opencypher.tools.tck.api.CsvFile
 import org.opencypher.tools.tck.api.ExecQuery
 import org.opencypher.tools.tck.api.Execute
 import org.opencypher.tools.tck.api.ExpectError
 import org.opencypher.tools.tck.api.ExpectResult
 import org.opencypher.tools.tck.api.InitQuery
+import org.opencypher.tools.tck.api.Parameters
 import org.opencypher.tools.tck.api.SideEffects
 import org.opencypher.tools.tck.api.Step
 import org.opencypher.tools.tck.constants.TCKErrorDetails
+import org.opencypher.tools.tck.constants.TCKErrorPhases
 import org.opencypher.tools.tck.constants.TCKErrorTypes
 import org.scalatest.AppendedClues
 import org.scalatest.Assertion
@@ -64,7 +67,7 @@ trait ValidateSteps extends AppendedClues with Matchers with OptionValues with V
       case (_: ExpectResult, _) => numberOfExpectResultSteps += 1
       case (se: SideEffects, _) if se.source.getType == StepType.AND => numberOfExplicitSideEffectSteps += 1
       case (se: SideEffects, _) if se.source.getType == StepType.THEN => numberOfImplicitSideEffectSteps += 1
-      case _ => Unit
+      case _ => ()
     }
 
     withClue("scenario has exactly one `When executing query` steps") {
@@ -127,12 +130,26 @@ trait ValidateSteps extends AppendedClues with Matchers with OptionValues with V
           TCKErrorTypes.ALL should contain(ee.errorType)
         }
         withClue(s"${ee.description} has valid phase") {
-          Set("runtime", "compile time") should contain(ee.phase)
+          TCKErrorPhases.ALL should contain(ee.phase)
         }
         withClue(s"${ee.description} has valid detail") {
           TCKErrorDetails.ALL should contain(ee.detail)
         }
       case _ => succeed
+    }
+
+    withClue("Scenario declares conflicting parameter ") {
+      val parameters: Seq[String] = steps.collect {
+        case Parameters(parameters, _) => parameters.keys.toList
+        case CsvFile(parameter, _, _) => List(parameter)
+      }.flatten
+      parameters.groupBy(identity).foreach {
+        case (parameter, group) =>
+          withClue(s"$$$parameter: ") {
+            group.size shouldBe 1
+          }
+        case _ =>
+      }
     }
 
     succeed

@@ -10,7 +10,7 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>tck-integrity-tests_2.12</artifactId>
+    <artifactId>tck-integrity-tests_${scala.binary.version}</artifactId>
     <name>openCypher TCK Integrity Tests</name>
     <url>http://opencypher.org</url>
     <description>openCypher Technology Compatibility Kit Integrity Tests</description>
@@ -49,6 +49,10 @@
                     <!--skipTests>true</skipTests-->
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.spurint.maven.plugins</groupId>
+                <artifactId>scala-cross-maven-plugin</artifactId>
+            </plugin>
         </plugins>
 
         <resources>
@@ -78,6 +82,22 @@
         </dependency>
 
         <dependency>
+            <!-- For intellij to get runtime dependencies right -->
+            <groupId>com.lihaoyi</groupId>
+            <artifactId>fastparse_${scala.binary.version}</artifactId>
+            <version>${dep.fastparse.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <!-- For intellij to get runtime dependencies right -->
+            <groupId>org.opencypher</groupId>
+            <artifactId>tck</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.opencypher</groupId>
             <artifactId>grammar</artifactId>
             <version>${project.version}</version>
@@ -95,6 +115,7 @@
         <dependency>
             <groupId>io.cucumber</groupId>
             <artifactId>cucumber-scala_${scala.binary.version}</artifactId>
+            <version>${dep.cucumber.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -107,6 +128,13 @@
         <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_${scala.binary.version}</artifactId>
+            <version>${dep.scalatest.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>scala-library</artifactId>
+                </exclusion>
+            </exclusions>
             <scope>test</scope>
         </dependency>
 

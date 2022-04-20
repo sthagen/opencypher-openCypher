@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -213,11 +213,12 @@ class Structure
                     }
                     else if ( constructor.getParameterCount() == 1 )
                     {
-                        for ( Class<?> base = constructor.getParameterTypes()[0];
-                              base != Object.class; base = base.getSuperclass() )
-                        {
-                            constructors.putIfAbsent( base, constructor );
-                        }
+                        constructors.put( constructor.getParameterTypes()[0], constructor );
+//                        for ( Class<?> base = constructor.getParameterTypes()[0];
+//                              base != Object.class; base = base.getSuperclass() )
+//                        {
+//                            constructors.putIfAbsent( base, constructor );
+//                        }
                     }
                 }
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -80,8 +80,9 @@ class Located implements LocationAware
                 return pos;
             }
         }
-        throw new IllegalStateException( "Located objects should share a root, " +
-                                         "and be included from different positions where their trees diverge." );
+//        throw new IllegalStateException( "Located objects should share a root, " +
+//                                         "and be included from different positions where their trees diverge." );
+        return 0;
     }
 
     private static List<Located> trace( Map<String, ? extends Located> locations, Located located )

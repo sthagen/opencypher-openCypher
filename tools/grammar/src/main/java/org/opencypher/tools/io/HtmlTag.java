@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,13 +42,12 @@ import java.nio.file.Path;
  *             .{@link #text(String) text}("Welcome to My Page") // adds text content to the tag
  *             .{@link #close() close}();                   // closes the &lt;/h1&gt; tag
  *         body.{@link #text(String) text}("This is a very neat page.");
- *         body.{@link #p() p}();
+ *         body.{@link #p(String) p}("It contains some text!");
  *         body.{@link #text(String) text}("You should come back when there is more content.");
  *         body.{@link #br() br}();
  *         body.{@link #text(String) text}("Until then, here is a picture of a cat for you to look at:");
  *         // img tags should not be closed, so we simply don't invoke the {@link #close close()} method.
  *         body.{@link #tag(String, Attribute[]) tag}("img", {@link HtmlTag}.{@link HtmlTag#attr attr}("src", "http://thecatapi.com/api/images/get?format=src&amp;type=gif") );
- *         body.{@link #p() p}();
  *         body.{@link #textTag textTag}("b", "To do:");
  *         try ( {@link HtmlTag} list = body.{@link #tag(String, Attribute[]) tag}("ul") ) {
  *             list.{@link #textTag textTag}("li", "Find cuter cat")
@@ -114,9 +113,11 @@ public final class HtmlTag implements AutoCloseable
         return textTag( "a", text, attr( "href", href ) );
     }
 
-    public void p()
+    public void p( String text )
     {
-        output.println( "<p>" );
+        output.append( "<p>" );
+        text( text );
+        output.append( "</p>" );
     }
 
     public void br()
@@ -278,9 +279,24 @@ public final class HtmlTag implements AutoCloseable
      *
      * @return the underlying {@link Output}
      */
-    public Output output()
+    public Output textOutput()
     {
-        return output;
+        return new Output()
+        {
+            @Override
+            public Output append( char x )
+            {
+                if ( x == '<' )
+                {
+                    output.append( "&lt;" );
+                }
+                else
+                {
+                    output.append( x );
+                }
+                return this;
+            }
+        };
     }
 
     public static final class HeadTag

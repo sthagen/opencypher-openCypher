@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,4 +53,18 @@ public interface NonTerminal
     Production declaringProduction();
 
     String title();
+
+    interface ReferenceResolver<T>
+    {
+        T resolveProduction( Production production );
+
+        T unknownReference( NonTerminal nonTerminal );
+
+        interface WG3<T> extends ReferenceResolver<T>
+        {
+            T resolveWG3Reference( String standard, String part, String production );
+        }
+    }
+
+    <T> T resolveReference( ReferenceResolver<T> resolver );
 }

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015-2021 "Neo Technology,"
+# Copyright (c) 2015-2022 "Neo Technology,"
 # Network Engine for Objects in Lund AB [http://neotechnology.com]
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,7 +61,7 @@ Feature: ReturnSkipLimit2 - Limit
       ORDER BY n.name ASC
       LIMIT 2
       """
-    Then the result should be, in any order:
+    Then the result should be, in order:
       | n             |
       | ({name: 'A'}) |
       | ({name: 'B'}) |

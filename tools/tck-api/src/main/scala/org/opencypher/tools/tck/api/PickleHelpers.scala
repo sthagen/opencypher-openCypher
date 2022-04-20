@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +30,7 @@ package org.opencypher.tools.tck.api
 import io.cucumber.core.gherkin.{DataTableArgument, DocStringArgument}
 import io.cucumber.plugin.event.StepArgument
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 trait PickleArgument
 

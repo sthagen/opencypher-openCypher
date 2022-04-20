@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,7 +45,13 @@ class TCKEventsTest extends AnyFunSuite with Assertions with Matchers {
     TCKEvents.stepStarted.subscribe(s =>
       events += s"Step '${s.step.getClass.getSimpleName} -> ${s.step.source.getText}' started")
     TCKEvents.stepFinished.subscribe(s =>
-      events += s"Step '${s.step.getClass.getSimpleName}' finished. Result: ${s.result.right.get.right.get}")
+      events += s"Step '${s.step.getClass.getSimpleName}' finished. Result: ${s.result match {
+        case Right(e) => e match {
+          case Right(cypherValueRecords) => cypherValueRecords
+          case Left(failed) => failed.toString
+        }
+        case Left(ex) => ex.toString
+      }}")
 
     val scenarios = CypherTCK.allTckScenarios.filter(s => s.name == "Return list size").toList
     scenarios.size should equal(1)

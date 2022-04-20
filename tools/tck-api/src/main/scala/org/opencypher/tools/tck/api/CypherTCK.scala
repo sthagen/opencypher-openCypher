@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,10 +27,6 @@
  */
 package org.opencypher.tools.tck.api
 
-import java.net.URI
-import java.nio.charset.StandardCharsets
-import java.nio.file._
-import java.util
 import io.cucumber.core.gherkin
 import io.cucumber.core.gherkin.DataTableArgument
 import io.cucumber.core.gherkin.DocStringArgument
@@ -46,11 +42,14 @@ import org.opencypher.tools.tck.constants.TCKStepDefinitions._
 import org.opencypher.tools.tck.constants.TCKTags
 import org.opencypher.tools.tck.values.CypherValue
 
-import scala.collection.JavaConverters._
+import java.net.URI
+import java.nio.charset.StandardCharsets
+import java.nio.file._
+import java.util
+import scala.jdk.CollectionConverters._
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
-import scala.util.matching.Regex
 
 object CypherTCK {
 
@@ -106,7 +105,7 @@ object CypherTCK {
       try {
         fs.foreach(_.close())
       } catch {
-        case _: UnsupportedOperationException => Unit
+        case _: UnsupportedOperationException => ()
       }
     }
   }
@@ -151,7 +150,9 @@ object CypherTCK {
 
           val includedWithExtractedName = included.map(parsePickleName)
           val includedGroupedByKeywordAndName = includedWithExtractedName.groupBy(formPickleGroupingKey)
-          val includedGroupedAndSorted = includedGroupedByKeywordAndName.mapValues(_.sortBy(_.pickle.getLocation.getLine))
+          val includedGroupedAndSorted = includedGroupedByKeywordAndName.transform {
+            case (_, included) => included.sortBy(_.pickle.getLocation.getLine)
+          }
 
           val featureName = feature.getName
           val scenarios = includedGroupedAndSorted.flatMap {
@@ -161,6 +162,7 @@ object CypherTCK {
                 }
             case (PickleGroupingKey("Scenario", _), pickles) =>
                 pickles.map(pickle => toScenario(categories, featureName, pickle.nameAndNumber, None, pickle.exampleName, pickle.pickle, featureFile))
+            case _ => Seq[Scenario]()
           }.toSeq
           TCKEvents.setFeature(FeatureRead(featureName, featureFile.toUri, featureString))
           Feature(scenarios)
@@ -192,10 +194,10 @@ object CypherTCK {
         stepArgument.asInstanceOf[DocStringArgument].getContent
       }
 
-      def dataTableRowsFromArgument = stepArgument.asInstanceOf[DataTableArgument].cells().asScala.map(_.asScala.toList).toList
+      def getDataTableRowsFromArgument: List[List[String]] = stepArgument.asInstanceOf[DataTableArgument].cells().asScala.map(_.asScala.toList).toList
 
       def parseTable(orderedLists: Boolean = true): CypherValueRecords = {
-        val rows = dataTableRowsFromArgument
+        val rows = getDataTableRowsFromArgument
         val header = rows.head
         val values = rows.tail
         val expectedRows = values.map { row =>
@@ -215,7 +217,7 @@ object CypherTCK {
       }
 
       def parseMap[V](parseValue: String => V): Map[String, V] = {
-        dataTableRowsFromArgument.map { sideEffect =>
+        getDataTableRowsFromArgument.map { sideEffect =>
           require(sideEffect.length == 2)
           sideEffect.head -> parseValue(sideEffect.tail.head)
         }.toMap
@@ -231,6 +233,7 @@ object CypherTCK {
         case initQueryR()                   => List(Execute(queryFromStep, InitQuery, step))
         case parametersR()                  => List(Parameters(parseParameters, step))
         case installedProcedureR(signature) => List(RegisterProcedure(signature, parseTable(), step))
+        case csvFileR(urlParameter)         => List(CsvFile(urlParameter, parseTable(), step))
 
         // When
         case executingQueryR()        => List(Measure(step), Execute(queryFromStep, ExecQuery, step))
@@ -267,14 +270,18 @@ object CypherTCK {
       scenarioSteps
     }.toList
     val (name, number) = parseNameAndNumber(nameAndNumber)
-    val tagsInferred = {
-      if (steps.exists {
-        case ExpectError(_, _, _, _) => true
+    val tagsInferred = tags ++ Set(TCKTags.NEGATIVE_TEST, TCKTags.WILDCARD_ERROR_DETAILS).filter {
+      case TCKTags.NEGATIVE_TEST => steps.exists {
+        case _: ExpectError => true
         case _ => false
-      })
-        tags + TCKTags.NEGATIVE_TEST
-      else
-        tags
+      }
+      case TCKTags.WILDCARD_ERROR_DETAILS => steps.exists {
+        case ExpectError(TCKErrorTypes.ERROR, _, _, _) => true
+        case ExpectError(_, TCKErrorPhases.ANY_TIME, _, _) => true
+        case ExpectError(_, _, TCKErrorDetails.ANY, _) => true
+        case _ => false
+      }
+      case _ => false
     }
     Scenario(categories.toList, featureName, number, name, exampleIndex, exampleName, tagsInferred, steps, pickle, sourceFile)
   }
@@ -342,6 +349,23 @@ case class RegisterProcedure(signature: String, values: CypherValueRecords, sour
 
   override def hashCode(): Int = {
     val state = Seq(signature, values, PickleStep(source))
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+}
+
+case class CsvFile(urlParameter: String, table: CypherValueRecords, source: io.cucumber.core.gherkin.Step) extends Step {
+  override def equals(obj: Any): Boolean = {
+    obj match {
+      case CsvFile(thatParameter, thatTable, thatSource) =>
+        thatParameter == urlParameter &&
+          thatTable == table &&
+          PickleStep(thatSource) == PickleStep(source)
+      case _ => false
+    }
+  }
+
+  override def hashCode(): Int = {
+    val state = Seq(urlParameter, table, PickleStep(source))
     state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
   }
 }

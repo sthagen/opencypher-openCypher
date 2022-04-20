@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -110,4 +110,17 @@ abstract class Sequenced extends Node
     void attributeString( StringBuilder result )
     {
     }
+
+    final Node replaceTerm( Node replacement )
+    {
+        if ( term != replacement && (term != null || !replacement.isEpsilon()) )
+        {
+            Sequenced copy = copy();
+            copy.term = replacement;
+            return copy;
+        }
+        return this;
+    }
+
+    abstract Sequenced copy();
 }

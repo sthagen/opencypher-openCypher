@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -109,5 +109,15 @@ class RepetitionNode extends Sequenced implements Repetition
         {
             result.append( '}' );
         }
+    }
+
+    @Override
+    RepetitionNode copy()
+    {
+        RepetitionNode repetition = new RepetitionNode();
+        repetition.min = this.min;
+        repetition.max = this.max;
+        repetition.norm = this.norm;
+        return repetition;
     }
 }

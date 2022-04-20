@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -102,6 +102,20 @@ trait ProcedureSupport {
   self: Graph =>
 
   def registerProcedure(signature: String, values: CypherValueRecords): Unit
+}
+
+/**
+ * Mix in this trait in your `Graph` implementation to opt in to running
+ * scenarios that create temporary CSV files.
+ */
+trait CsvFileCreationSupport {
+  self: Graph =>
+
+  /**
+   * Create a CSV file and return file URL as String.
+   * @return URL of the created CSV file
+   */
+  def createCSVFile(contents: CypherValueRecords): String
 }
 
 trait ResultCreation {

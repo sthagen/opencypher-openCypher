@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,34 +35,28 @@ import org.opencypher.tools.tck.api.groups.Tag
 import org.opencypher.tools.tck.api.groups.TckTree
 import org.opencypher.tools.tck.api.groups.Total
 import org.scalatest.OptionValues
-import org.scalatest.ParallelTestExecution
-import org.scalatest.funspec.AsyncFunSpec
+import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.concurrent.Future
-
-trait ScenarioFormatChecker extends AsyncFunSpec with Matchers with OptionValues with ValidateScenario with ParallelTestExecution {
+trait ScenarioFormatChecker extends AnyFunSpec with Matchers with OptionValues with ValidateScenario {
 
   def create(scenarios: Seq[Scenario]): Unit = {
-
     implicit val tck: TckTree = TckTree(scenarios)
 
     def spawnTests(currentGroup: Group): Unit = {
       currentGroup match {
         case Total =>
           Total.children.toSeq.sorted.foreach(spawnTests)
-        case _: Tag => Unit
+        case _: Tag => ()
         case g: ContainerGroup =>
           describe(g.description) {
             g.children.toSeq.sorted.foreach(spawnTests)
           }
         case i: Item =>
           it(i.description) {
-            Future {
-              validateScenario(i.scenario)
-            }
+            validateScenario(i.scenario)
           }
-        case _ => Unit
+        case _ => ()
       }
     }
 

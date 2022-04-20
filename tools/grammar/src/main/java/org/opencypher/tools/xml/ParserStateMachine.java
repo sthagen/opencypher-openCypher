@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -130,6 +130,10 @@ class ParserStateMachine extends DefaultHandler2
         if ( uri.isEmpty() )
         {
             uri = prefixToUri.get( "" );
+            if ( uri == null )
+            {
+                uri = "";
+            }
         }
         if ( !node.builder.attribute( required, node.value, resolver, uri, name, type, value ) )
         {
@@ -201,8 +205,7 @@ class ParserStateMachine extends DefaultHandler2
             Object value = child.create( this.value );
             if ( value instanceof LocationAware )
             {
-                ((LocationAware) value).location(
-                        locator.getSystemId(), locator.getLineNumber(), locator.getColumnNumber() );
+                ((LocationAware) value).location( locator.getSystemId(), locator.getLineNumber(), locator.getColumnNumber() );
             }
             return new Node( this, child, value );
         }
@@ -239,16 +242,25 @@ class ParserStateMachine extends DefaultHandler2
         @Override
         Node child( String uri, String name, Locator locator ) throws SAXException
         {
-            if ( !builder.uri.equalsIgnoreCase( uri ) || !builder.name.equalsIgnoreCase( name ) )
+            NodeBuilder root;
+            if ( builder.name == null )
+            {
+                root = builder.child( uri, name );
+            }
+            else
+            {
+                root = builder;
+            }
+            if ( !root.uri.equalsIgnoreCase( uri ) || !root.name.equalsIgnoreCase( name ) )
             {
                 throw new SAXException(
-                        "Root element must be '" + builder.name + "' in namespace '" + builder.uri +
+                        "Root element must be '" + root.name + "' in namespace '" + root.uri +
                         "', but was '" + name + "' in namespace '" + uri + "'" );
             }
-            Object value = builder.create( null );
+            Object value = root.create( null );
             if ( headers instanceof char[] )
             {
-                builder.header( value, (char[]) headers );
+                root.header( value, (char[]) headers );
             }
             else if ( headers instanceof List<?> )
             {
@@ -256,10 +268,14 @@ class ParserStateMachine extends DefaultHandler2
                 List<char[]> comments = (List<char[]>) headers;
                 for ( char[] comment : comments )
                 {
-                    builder.header( value, comment );
+                    root.header( value, comment );
                 }
             }
-            return new RootNode( builder, value );
+            if ( value instanceof LocationAware )
+            {
+                ((LocationAware) value).location( locator.getSystemId(), locator.getLineNumber(), locator.getColumnNumber()  );
+            }
+            return new RootNode( root, value );
         }
 
         @Override

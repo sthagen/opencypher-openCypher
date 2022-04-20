@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -64,7 +64,7 @@ public class CucumberReportAdapterTest {
         Path featureFile = featuresPath.relativize(featuresPath.resolve("Foo.feature"));
         String content = getResource("Foo.feature");
 
-        Seq<Scenario> scenariosSeq = CypherTCK.parseFeature(featureFile, content, JavaConverters.asScalaBuffer(new java.util.ArrayList<String>())).scenarios();
+        Seq<Scenario> scenariosSeq = CypherTCK.parseFeature(featureFile, content, JavaConverters.asScalaBuffer(new java.util.ArrayList<String>()).toSeq()).scenarios();
         java.util.List<Scenario> scenarios = JavaConverters.seqAsJavaList(scenariosSeq);
 
         AbstractFunction0<Graph> graph = graph();

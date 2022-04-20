@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -69,7 +69,7 @@ class Dependencies
                     .append( "Productions used in non-terminals have not been defined:" );
             for ( Map.Entry<String, Set<ProductionNode>> entry : missingProductions.entrySet() )
             {
-                message.append( "\n  " ).append( entry.getKey() );
+                message.append( "\n  '" ).append( entry.getKey() ).append( "'" );
                 String sep = " used from: ";
                 for ( ProductionNode origin : entry.getValue() )
                 {

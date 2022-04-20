@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021 "Neo Technology,"
+ * Copyright (c) 2015-2022 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,8 +29,6 @@ package org.opencypher.tools.tck.api
 
 import org.opencypher.tools.tck.values.CypherValue
 
-import scala.compat.Platform.EOL
-
 /**
   * Convenience implementation for TCK implementers who prefer writing result
   * values in the same string format as the TCK expectations. This is then
@@ -39,7 +37,7 @@ import scala.compat.Platform.EOL
   */
 case class StringRecords(header: List[String], rows: List[Map[String, String]]) {
   def asValueRecords: CypherValueRecords = {
-    val converted = rows.map(_.mapValues(CypherValue(_)))
+    val converted = rows.map(_.map { case (k, v) => (k, CypherValue(v)) })
     CypherValueRecords(header, converted)
   }
 }
@@ -62,14 +60,14 @@ case class CypherValueRecords(header: List[String], rows: List[Map[String, Cyphe
         val strings = values.map(_.toString)
         strings.mkString("| ", " | ", " |")
       })
-      s"${_header}$EOL${_rows.mkString(s"$EOL")}"
+      s"${_header}${java.lang.System.lineSeparator()}${_rows.mkString(java.lang.System.lineSeparator())}"
     }
   }
 }
 
 object CypherValueRecords {
   def fromRows(header: List[String], data: List[Map[String, String]], orderedLists: Boolean): CypherValueRecords = {
-    val parsed = data.map(row => row.mapValues(v => CypherValue(v, orderedLists)).view.force)
+    val parsed = data.map(row => row.map { case (k, v) => (k, CypherValue(v, orderedLists)) })
     CypherValueRecords(header, parsed)
   }
 
