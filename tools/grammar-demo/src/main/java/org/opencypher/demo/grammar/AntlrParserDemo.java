@@ -62,48 +62,63 @@ public class AntlrParserDemo
 {
     private static final String QUERY = "MATCH (c:Label), (d:Label2) SET c.property = d.property WITH c MATCH (e:Label3 {name: c.name}) RETURN c";
     private static final String INDENT = "  ";
+    private static final String GRAMMAR_XML = "/cypher.xml";
+    private static final String GRAMMAR_G4 = "Cypher.g4";
 
     public static void main( String[] args )
     {
-        System.out.println("== With tree listener, grammar from XML ==");
-        new AntlrParserDemo( true, true, QUERY, INDENT);
-        System.out.println("== With tree listener, grammar from g4 ==");
-        new AntlrParserDemo( true, false, QUERY, INDENT);
-        System.out.println("== Manual tree walking, grammar from XML ==");
-        new AntlrParserDemo( false, true, QUERY, INDENT);
-        System.out.println("== Manual tree walking, grammar from g4 ==");
-        new AntlrParserDemo( false, false, QUERY, INDENT);
+        System.out.println( "== With tree listener, grammar from XML ==" );
+        new AntlrParserDemo( true, true, QUERY, INDENT );
+        System.out.println( "== With tree listener, grammar from g4 ==" );
+        new AntlrParserDemo( true, false, QUERY, INDENT );
+        System.out.println( "== Manual tree walking, grammar from XML ==" );
+        new AntlrParserDemo( false, true, QUERY, INDENT );
+        System.out.println( "== Manual tree walking, grammar from g4 ==" );
+        new AntlrParserDemo( false, false, QUERY, INDENT );
     }
 
-    public AntlrParserDemo( boolean useTreeListener, boolean createGrammarFromXML, String query, String indentStep)
+    public AntlrParserDemo( boolean useTreeListener, boolean createGrammarFromXML, String query, String indentStep )
     {
-        org.antlr.v4.tool.Grammar grammar = createGrammarFromXML ? createGrammarFromXML( "/cypher.xml" ) : readGrammarFromG4( "/Cypher.g4" );
-        LexerInterpreter lexer = grammar.createLexerInterpreter( CharStreams.fromString( query ) );
-        ParserInterpreter parser = grammar.createParserInterpreter( new CommonTokenStream( lexer ) );
-        lexer.removeErrorListeners();
-        parser.removeErrorListeners();
-        lexer.addErrorListener( new FailingErrorListener( query ) );
-        parser.addErrorListener( new FailingErrorListener( query ) );
-        if( useTreeListener )
+        org.antlr.v4.tool.Grammar grammar;
+        if ( createGrammarFromXML )
         {
-            parser.addParseListener( new MyParseTreeListener(grammar, indentStep) );
+            grammar = createGrammarFromXML( GRAMMAR_XML );
         }
-        ParseTree tree = parser.parse( grammar.getRule( "oC_Cypher" ).index );
-        if( !useTreeListener )
+        else
         {
-            print( grammar, tree, indentStep, "" );
+            grammar = readGrammarFromG4( GRAMMAR_G4 );
+        }
+        if ( grammar != null )
+        {
+            LexerInterpreter lexer = grammar.createLexerInterpreter( CharStreams.fromString( query ) );
+            ParserInterpreter parser = grammar.createParserInterpreter( new CommonTokenStream( lexer ) );
+            lexer.removeErrorListeners();
+            parser.removeErrorListeners();
+            lexer.addErrorListener( new FailingErrorListener( query ) );
+            parser.addErrorListener( new FailingErrorListener( query ) );
+            if ( useTreeListener )
+            {
+                parser.addParseListener( new MyParseTreeListener( grammar, INDENT ) );
+            }
+            ParseTree tree = parser.parse( grammar.getRule( "oC_Cypher" ).index );
+            if ( !useTreeListener )
+            {
+                print( grammar, tree, INDENT, "" );
+            }
         }
     }
 
     /*
      * Using a ParseTreeListener to consume the parse tree
      */
-    private class MyParseTreeListener implements ParseTreeListener {
+    private class MyParseTreeListener implements ParseTreeListener
+    {
         private String indent = "";
-        private String indentStep;
-        private org.antlr.v4.tool.Grammar grammar;
+        private final String indentStep;
+        private final org.antlr.v4.tool.Grammar grammar;
 
-        MyParseTreeListener(org.antlr.v4.tool.Grammar grammar, String indentStep) {
+        MyParseTreeListener( org.antlr.v4.tool.Grammar grammar, String indentStep )
+        {
             this.grammar = grammar;
             this.indentStep = indentStep;
         }
@@ -111,7 +126,7 @@ public class AntlrParserDemo
         @Override
         public void visitTerminal( TerminalNode node )
         {
-            System.out.println( indent + INDENT + "\"" + node.getText() + "\"" );
+            System.out.println( indent + indentStep + "\"" + node.getText() + "\"" );
         }
 
         @Override
@@ -124,34 +139,36 @@ public class AntlrParserDemo
         public void enterEveryRule( ParserRuleContext ctx )
         {
             String ruleName = grammar.getRule( ctx.getRuleIndex() ).name;
-            indent = indent + INDENT;
-            System.out.println( indent + ruleName);
+            indent = indent + indentStep;
+            System.out.println( indent + ruleName );
             //System.out.println("Entre:" + ctx.getText());
         }
 
         @Override
         public void exitEveryRule( ParserRuleContext ctx )
         {
-            indent = indent.substring( 0, indent.length() - INDENT.length() );
+            indent = indent.substring( 0, indent.length() - indentStep.length() );
         }
     }
 
     /*
      * Walking the parse tree manually
      */
-    private void print(org.antlr.v4.tool.Grammar grammar, ParseTree tree, String indentStep, String indent) {
-        if(tree != null) {
+    private void print( org.antlr.v4.tool.Grammar grammar, ParseTree tree, String indentStep, String indent )
+    {
+        if ( tree != null )
+        {
             Object payload = tree.getPayload();
-            if( payload instanceof InterpreterRuleContext )
+            if ( payload instanceof InterpreterRuleContext )
             {
                 String ruleName = grammar.getRule( ((InterpreterRuleContext) payload).getRuleIndex() ).name;
-                System.out.println( indent + ruleName);
+                System.out.println( indent + ruleName );
             }
             else
             {
                 System.out.println( indent + "\"" + tree.getText() + "\"" );
             }
-            for( int i = 0; i <= tree.getChildCount(); i++ )
+            for ( int i = 0; i <= tree.getChildCount(); i++ )
             {
                 print( grammar, tree.getChild( i ), indentStep, indent + indentStep );
             }
@@ -161,18 +178,28 @@ public class AntlrParserDemo
     /*
      * Grammar loading: Cypher.g4 -> org.antlr.v4.tool.Grammar instance
      */
-    private Grammar readGrammarFromG4( String resource )
+    private Grammar readGrammarFromG4( String filename )
     {
-        String grammarString = null;
+        String grammarString;
         try
         {
-            grammarString = new String( Files.readAllBytes( new File( resourceURL( resource ) ).toPath() ) );
+            File g4File = new File( filename );
+            if ( g4File.exists() )
+            {
+                grammarString = new String( Files.readAllBytes( g4File.toPath() ) );
+                return parseGrammarFromString( grammarString );
+            }
+            else
+            {
+                System.out.println( filename + " not found." );
+                return null;
+            }
         }
         catch ( Throwable t )
         {
-            fail( "Unexpected error while read g4 grammar: " + t.getMessage() );
+            fail( "Unexpected error while reading g4 grammar: " + t.getMessage() );
         }
-        return  parseGrammarFromString( grammarString );
+        return null;
     }
 
     /*
@@ -192,10 +219,11 @@ public class AntlrParserDemo
         {
             fail( "Unexpected error while writing antlr grammar: " + t.getMessage() );
         }
-        return  parseGrammarFromString( grammarString );
+        return parseGrammarFromString( grammarString );
     }
 
-    private Grammar parseGrammarFromString( String grammarString ) {
+    private Grammar parseGrammarFromString( String grammarString )
+    {
         org.antlr.v4.Tool tool = new org.antlr.v4.Tool();
         GrammarRootAST ast = tool.parseGrammarFromString( grammarString );
         Grammar grammar = tool.createGrammar( ast );
@@ -252,7 +280,8 @@ public class AntlrParserDemo
         }
     }
 
-    private void fail(String msg) {
-        throw new RuntimeException(msg);
+    private void fail( String msg )
+    {
+        throw new RuntimeException( msg );
     }
 }
